@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-main: #08080a;
+  --color-accent: #e50914;
+  --color-text-main: #ffffff;
+  --color-glass: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  background-color: var(--color-bg-main);
+  color: var(--color-text-main);
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  overflow-x: hidden;
+}
