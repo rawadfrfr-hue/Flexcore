@@ -5,9 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import MovieCard from '@/components/MovieCard';
+import { SkeletonHero, SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Movie, enrichMovieWithTmdb, formatRuntime } from '@/lib/movies';
+import { Movie, enrichMovieWithTmdb } from '@/lib/movies';
 
 export default function Home() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -25,8 +26,12 @@ export default function Home() {
       setMovies(reversed);
       setLoading(false);
 
-      const enriched = await Promise.all(reversed.map(m => enrichMovieWithTmdb(m)));
-      setMovies(enriched);
+      // Only enrich the hero movie in background for banner backdrop if missing
+      if (reversed.length > 0 && (!reversed[0].backdrops || reversed[0].backdrops.length === 0)) {
+        enrichMovieWithTmdb(reversed[0]).then(enrichedHero => {
+          setMovies(prev => prev.map(m => m.id === enrichedHero.id ? enrichedHero : m));
+        });
+      }
     });
 
     return () => unsubscribe();
@@ -47,9 +52,11 @@ export default function Home() {
 
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10">
         
-        {/* Featured Hero Banner */}
-        {heroMovie && (
-          <section className="relative w-full aspect-[21/9] min-h-[320px] md:min-h-[420px] rounded-2xl overflow-hidden border border-white/10 shadow-2xl flex items-end p-6 md:p-10 group">
+        {/* Featured Hero Banner or Skeleton */}
+        {loading ? (
+          <SkeletonHero />
+        ) : heroMovie ? (
+          <section className="relative w-full aspect-[21/9] min-h-[320px] md:min-h-[420px] rounded-2xl overflow-hidden border border-white/10 shadow-2xl flex items-end p-6 md:p-10 group select-none">
             {/* Background Image */}
             <Image
               src={heroMovie.backdrops && heroMovie.backdrops.length > 0 ? heroMovie.backdrops[0] : heroMovie.posterUrl}
@@ -93,7 +100,7 @@ export default function Home() {
               <div className="pt-2 flex items-center gap-3">
                 <Link
                   href={`/watch/${heroMovie.id}`}
-                  className="bg-accent hover:bg-accent/80 text-white font-extrabold px-6 py-3 rounded-xl text-sm flex items-center gap-2 transition-transform active:scale-95 shadow-lg shadow-accent/30"
+                  className="bg-accent hover:bg-accent/80 text-white font-extrabold px-6 py-3 rounded-xl text-sm flex items-center gap-2 click-effect active:scale-95 shadow-lg shadow-accent/30 touch-manipulation"
                 >
                   <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -110,27 +117,27 @@ export default function Home() {
               </div>
             </div>
           </section>
-        )}
+        ) : null}
 
         {/* Quick Category Pills */}
-        <section className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <section className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none select-none">
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-2">Categories:</span>
-          <Link href="/movies/hindi" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold transition-colors">
+          <Link href="/movies/hindi" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
             🎬 Hindi Movies
           </Link>
-          <Link href="/movies/hollywood" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold transition-colors">
+          <Link href="/movies/hollywood" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
             🎥 Hollywood
           </Link>
-          <Link href="/movies/south-indian" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold transition-colors">
+          <Link href="/movies/south-indian" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
             🔥 South Indian
           </Link>
-          <Link href="/series/k-drama" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold transition-colors">
+          <Link href="/series/k-drama" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
             💖 K-Drama
           </Link>
-          <Link href="/series/anime" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold transition-colors">
+          <Link href="/series/anime" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
             ⚡ Anime
           </Link>
-          <Link href="/series/bangla" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold transition-colors">
+          <Link href="/series/bangla" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
             🇧🇩 Bangla Series
           </Link>
         </section>
@@ -141,13 +148,13 @@ export default function Home() {
             <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
               <span>🎬</span> Trending Movies
             </h2>
-            <Link href="/movies" className="text-xs text-accent hover:underline font-bold">
+            <Link href="/movies" className="text-xs text-accent hover:underline font-bold click-effect">
               View All Movies →
             </Link>
           </div>
 
           {loading ? (
-            <div className="py-12 text-center text-gray-400 text-sm">Loading catalog...</div>
+            <SkeletonGrid count={6} />
           ) : moviesList.length === 0 ? (
             <div className="text-center py-10 bg-white/5 rounded-xl text-gray-400 text-sm">No movies found.</div>
           ) : (
@@ -165,13 +172,13 @@ export default function Home() {
             <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
               <span>📺</span> Latest Web Series & Shows
             </h2>
-            <Link href="/series" className="text-xs text-accent hover:underline font-bold">
+            <Link href="/series" className="text-xs text-accent hover:underline font-bold click-effect">
               View All Web Series →
             </Link>
           </div>
 
           {loading ? (
-            <div className="py-12 text-center text-gray-400 text-sm">Loading series...</div>
+            <SkeletonGrid count={6} />
           ) : seriesList.length === 0 ? (
             <div className="text-center py-10 bg-white/5 rounded-xl text-gray-400 text-sm">No web series found.</div>
           ) : (

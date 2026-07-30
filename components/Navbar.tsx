@@ -193,11 +193,11 @@ export default function Navbar() {
       )}
 
       {/* Main Header */}
-      <header className="h-[75px] md:h-[80px] sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6 md:px-10 bg-[#08080a]/90 backdrop-blur-md border-b border-white/10">
+      <header className="h-[75px] md:h-[80px] sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6 md:px-10 bg-[#08080a]/90 backdrop-blur-md border-b border-white/10 select-none">
         <div className="flex items-center gap-3 sm:gap-4">
           <button 
             onClick={() => setIsDrawerOpen(true)}
-            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-colors cursor-pointer"
+            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/20 text-white border border-white/10 transition-all click-effect touch-manipulation cursor-pointer"
             aria-label="Open Navigation Menu"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -207,7 +207,7 @@ export default function Navbar() {
             </svg>
           </button>
 
-          <Link href="/" className="text-[20px] sm:text-[22px] md:text-[26px] font-black tracking-tighter text-accent flex items-center gap-2">
+          <Link href="/" className="text-[20px] sm:text-[22px] md:text-[26px] font-black tracking-tighter text-accent flex items-center gap-2 click-effect active:scale-95">
             <span>FLIXCORE</span>
             <span className="text-[10px] bg-accent/20 border border-accent/40 text-accent font-semibold px-2 py-0.5 rounded tracking-normal uppercase hidden sm:inline-block">TMDB</span>
           </Link>
@@ -216,38 +216,52 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-1 ml-4 border-l border-white/10 pl-4 text-xs font-bold text-gray-300">
             <Link 
               href="/" 
-              className={`px-3 py-1.5 rounded-lg transition-colors ${pathname === '/' ? 'text-white bg-white/10' : 'hover:text-white hover:bg-white/5'}`}
+              className={`px-3 py-1.5 rounded-lg transition-all click-effect ${pathname === '/' ? 'text-white bg-white/10' : 'hover:text-white hover:bg-white/5'}`}
             >
               Home
             </Link>
             <Link 
               href="/movies" 
-              className={`px-3 py-1.5 rounded-lg transition-colors ${pathname.startsWith('/movies') ? 'text-white bg-white/10' : 'hover:text-white hover:bg-white/5'}`}
+              className={`px-3 py-1.5 rounded-lg transition-all click-effect ${pathname.startsWith('/movies') ? 'text-white bg-white/10' : 'hover:text-white hover:bg-white/5'}`}
             >
               Movies
             </Link>
             <Link 
               href="/series" 
-              className={`px-3 py-1.5 rounded-lg transition-colors ${pathname.startsWith('/series') ? 'text-white bg-white/10' : 'hover:text-white hover:bg-white/5'}`}
+              className={`px-3 py-1.5 rounded-lg transition-all click-effect ${pathname.startsWith('/series') ? 'text-white bg-white/10' : 'hover:text-white hover:bg-white/5'}`}
             >
               Series
             </Link>
           </div>
         </div>
 
-        {/* Search Bar on Header */}
-        <form onSubmit={handleSearchSubmit} className="relative hidden sm:block w-48 md:w-72">
-          <input
-            type="text"
-            placeholder="Search movies, series..."
-            value={searchVal}
-            onChange={(e) => setSearchVal(e.target.value)}
-            className="w-full bg-white/5 border border-white/15 rounded-full py-1.5 pl-9 pr-4 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-accent focus:bg-black/60 transition-all"
-          />
-          <svg className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-        </form>
+        {/* Search Bar & Mobile Search Button */}
+        <div className="flex items-center gap-2">
+          {/* Mobile search button */}
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="sm:hidden p-2.5 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/20 border border-white/10 text-gray-300 click-effect touch-manipulation"
+            aria-label="Search"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </button>
+
+          {/* Desktop Search Bar */}
+          <form onSubmit={handleSearchSubmit} className="relative hidden sm:block w-48 md:w-72">
+            <input
+              type="text"
+              placeholder="Search movies, series..."
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+              className="w-full bg-white/5 border border-white/15 rounded-full py-1.5 pl-9 pr-4 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-accent focus:bg-black/60 transition-all touch-manipulation"
+            />
+            <svg className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </form>
+        </div>
       </header>
     </>
   );

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import MovieCard from '@/components/MovieCard';
+import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { Movie, enrichMovieWithTmdb } from '@/lib/movies';
@@ -29,9 +30,6 @@ export default function SeriesPage() {
       const reversed = seriesOnly.reverse();
       setSeries(reversed);
       setLoading(false);
-
-      const enriched = await Promise.all(reversed.map(m => enrichMovieWithTmdb(m)));
-      setSeries(enriched);
     });
 
     return () => unsubscribe();
@@ -55,10 +53,7 @@ export default function SeriesPage() {
         </div>
 
         {loading ? (
-          <div className="py-20 text-center">
-            <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-            <p className="text-gray-400 text-sm">Loading Web Series...</p>
-          </div>
+          <SkeletonGrid count={12} />
         ) : series.length === 0 ? (
           <div className="text-center py-16 bg-white/5 rounded-2xl border border-white/10 text-gray-400 text-sm">
             No web series found.

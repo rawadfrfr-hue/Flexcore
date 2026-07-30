@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import MovieCard from '@/components/MovieCard';
+import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { Movie, enrichMovieWithTmdb } from '@/lib/movies';
@@ -35,9 +36,6 @@ function SearchContent() {
       const reversed = filtered.reverse();
       setMovies(reversed);
       setLoading(false);
-
-      const enriched = await Promise.all(reversed.map(m => enrichMovieWithTmdb(m)));
-      setMovies(enriched);
     });
 
     return () => unsubscribe();
@@ -58,10 +56,7 @@ function SearchContent() {
       </div>
 
       {loading ? (
-        <div className="py-20 text-center">
-          <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-gray-400 text-sm">Searching Library...</p>
-        </div>
+        <SkeletonGrid count={12} />
       ) : movies.length === 0 ? (
         <div className="text-center py-16 bg-white/5 rounded-2xl border border-white/10 text-gray-400 text-sm">
           No movies or series matching &ldquo;{q}&rdquo; found.
@@ -81,7 +76,7 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans">
       <Navbar />
-      <Suspense fallback={<div className="p-10 text-center text-gray-400">Loading Search...</div>}>
+      <Suspense fallback={<div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"><SkeletonGrid count={12} /></div>}>
         <SearchContent />
       </Suspense>
     </div>

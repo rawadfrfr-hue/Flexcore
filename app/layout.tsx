@@ -1,17 +1,27 @@
-import type {Metadata} from 'next';
-import './globals.css'; // Global styles
+import type { Metadata, Viewport } from 'next';
+import './globals.css';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'My Google AI Studio App',
-  description: 'My Google AI Studio App',
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#08080a',
 };
 
-export default function RootLayout({children}: {children: React.ReactNode}) {
+export const metadata: Metadata = {
+  title: 'FlixCore - Watch Movies & Series',
+  description: 'Stream latest movies and web series in high quality',
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body suppressHydrationWarning>{children}</body>
+    <html lang="en" className="dark scroll-smooth">
+      <body suppressHydrationWarning className="bg-[#08080a] text-white antialiased touch-manipulation select-none">
+        {children}
+      </body>
     </html>
   );
 }

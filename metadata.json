@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "FlixCore Streaming",
+  "description": "High-performance streaming platform for movies and web series",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

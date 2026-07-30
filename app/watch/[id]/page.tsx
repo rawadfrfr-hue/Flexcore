@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import MovieCard from '@/components/MovieCard';
+import { SkeletonWatch } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, getDocs, query, limit } from 'firebase/firestore';
 import { Movie, enrichMovieWithTmdb, formatRuntime } from '@/lib/movies';
@@ -52,10 +53,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
     return (
       <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans">
         <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-          <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-400 text-sm animate-pulse">Loading Full Screen Movie Player...</p>
-        </div>
+        <SkeletonWatch />
       </div>
     );
   }
@@ -85,7 +83,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <Link 
             href="/" 
-            className="inline-flex items-center gap-2 text-xs md:text-sm font-bold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10 transition-colors"
+            className="inline-flex items-center gap-2 text-xs md:text-sm font-bold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10 transition-all click-effect touch-manipulation"
           >
             ← Back to Browse
           </Link>
@@ -157,7 +155,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                 download 
                 target="_blank"
                 rel="noreferrer"
-                className="bg-accent hover:bg-accent/80 text-white px-6 py-3 rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-accent/20 flex items-center gap-2"
+                className="bg-accent hover:bg-accent/80 text-white px-6 py-3 rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-accent/20 flex items-center gap-2 click-effect active:scale-95 touch-manipulation cursor-pointer"
               >
                 <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>

@@ -7,9 +7,66 @@
   --color-glass: rgba(255, 255, 255, 0.08);
 }
 
-body {
+html, body {
   background-color: var(--color-bg-main);
   color: var(--color-text-main);
   font-family: 'Helvetica Neue', Arial, sans-serif;
   overflow-x: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
+
+/* Fix mobile double pinch zoom aspect ratio distortion */
+@viewport {
+  width: device-width;
+  zoom: 1.0;
+}
+
+/* Skeleton shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.03) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+/* Click and touch animations */
+.click-effect {
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.click-effect:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+/* Custom smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #08080a;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #e50914;
+}
+
