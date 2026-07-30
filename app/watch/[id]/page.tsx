@@ -109,7 +109,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
     );
   }
 
-  const isSeries = movie.type === 'series' || movie.genre.toLowerCase().includes('series') || movie.genre.toLowerCase().includes('drama') || movie.genre.toLowerCase().includes('anime');
+  const isSeries = movie.type === 'series' || movie.type === 'tv' || (movie.type !== 'movie' && (movie.category?.toLowerCase().includes('series') || movie.category?.toLowerCase() === 'k-drama' || movie.category?.toLowerCase() === 'anime'));
   const tmdbId = movie.tmdbId;
 
   // Build VidSrc URL

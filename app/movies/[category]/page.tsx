@@ -32,13 +32,13 @@ export default function MovieCategoryPage({ params }: { params: Promise<{ catego
       })) as Movie[];
 
       const filtered = rawMovies.filter(m => {
-        const isMovie = m.type === 'movie' || !m.type;
+        const isMovie = m.type === 'movie' || (m.type !== 'series' && m.type !== 'tv' && !(m.category || '').toLowerCase().includes('series'));
         if (!isMovie) return false;
 
-        const cat = (m.category || '').toLowerCase();
-        const genre = (m.genre || '').toLowerCase();
-        const title = (m.title || '').toLowerCase();
-        const target = category.toLowerCase().replace('-', ' ');
+        const cat = (m.category || '').toLowerCase().replace(/-/g, ' ');
+        const genre = (m.genre || '').toLowerCase().replace(/-/g, ' ');
+        const title = (m.title || '').toLowerCase().replace(/-/g, ' ');
+        const target = category.toLowerCase().replace(/-/g, ' ');
 
         return cat.includes(target) || genre.includes(target) || title.includes(target);
       });

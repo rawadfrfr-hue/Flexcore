@@ -33,13 +33,13 @@ export default function SeriesCategoryPage({ params }: { params: Promise<{ categ
       })) as Movie[];
 
       const filtered = rawMovies.filter(m => {
-        const isSeries = m.type === 'series' || (m.genre || '').toLowerCase().includes('series') || (m.genre || '').toLowerCase().includes('drama') || (m.genre || '').toLowerCase().includes('anime');
+        const isSeries = m.type === 'series' || m.type === 'tv' || (m.type !== 'movie' && ((m.category || '').toLowerCase().includes('series') || (m.category || '').toLowerCase() === 'k-drama' || (m.category || '').toLowerCase() === 'anime'));
         if (!isSeries) return false;
 
-        const cat = (m.category || '').toLowerCase();
-        const genre = (m.genre || '').toLowerCase();
-        const title = (m.title || '').toLowerCase();
-        const target = category.toLowerCase().replace('-', ' ');
+        const cat = (m.category || '').toLowerCase().replace(/-/g, ' ');
+        const genre = (m.genre || '').toLowerCase().replace(/-/g, ' ');
+        const title = (m.title || '').toLowerCase().replace(/-/g, ' ');
+        const target = category.toLowerCase().replace(/-/g, ' ');
 
         return cat.includes(target) || genre.includes(target) || title.includes(target);
       });

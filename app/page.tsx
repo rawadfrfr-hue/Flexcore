@@ -39,8 +39,10 @@ export default function Home() {
 
   const heroMovie = movies.length > 0 ? movies[0] : null;
 
-  const moviesList = movies.filter(m => m.type !== 'series');
-  const seriesList = movies.filter(m => m.type === 'series' || (m.genre || '').toLowerCase().includes('series') || (m.genre || '').toLowerCase().includes('drama') || (m.genre || '').toLowerCase().includes('anime'));
+  const isItemSeries = (m: Movie) => m.type === 'series' || m.type === 'tv' || (m.type !== 'movie' && ((m.category || '').toLowerCase().includes('series') || (m.category || '').toLowerCase() === 'k-drama' || (m.category || '').toLowerCase() === 'anime'));
+
+  const moviesList = movies.filter(m => !isItemSeries(m));
+  const seriesList = movies.filter(m => isItemSeries(m));
 
   return (
     <div className="relative min-h-screen flex flex-col font-sans bg-[#08080a] text-white">

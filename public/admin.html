@@ -328,16 +328,31 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const movieCategories = ['HINDI', 'HOLLYWOOD', 'HINDI DUBBED', 'SOUTH INDIAN', 'BANGLA'];
-    const seriesCategories = ['BANGLA', 'HOLLYWOOD', 'Anime', 'HINDI', 'BANGLA DUBBED', 'K-DRAMA'];
+    const movieCategories = [
+      { val: 'HINDI', label: 'Hindi Movies (HINDI)' },
+      { val: 'HOLLYWOOD', label: 'Hollywood Movies (HOLLYWOOD)' },
+      { val: 'HINDI DUBBED', label: 'Hindi Dubbed (HINDI DUBBED)' },
+      { val: 'SOUTH INDIAN', label: 'South Indian (SOUTH INDIAN)' },
+      { val: 'BANGLA', label: 'Bangla Movies (BANGLA)' }
+    ];
+
+    const seriesCategories = [
+      { val: 'BANGLA', label: 'Bangla Series (BANGLA)' },
+      { val: 'HOLLYWOOD', label: 'Hollywood Series (HOLLYWOOD)' },
+      { val: 'ANIME', label: 'Anime Series (ANIME)' },
+      { val: 'HINDI', label: 'Hindi Series (HINDI)' },
+      { val: 'BANGLA DUBBED', label: 'Bangla Dubbed (BANGLA DUBBED)' },
+      { val: 'K-DRAMA', label: 'K-Drama (K-DRAMA)' }
+    ];
 
     function populateCategoryDropdown(typeSelectEl, categorySelectEl, defaultCategory = '') {
       const isSeries = typeSelectEl.value === 'series';
       const categories = isSeries ? seriesCategories : movieCategories;
       
-      categorySelectEl.innerHTML = categories.map(cat => 
-        `<option value="${cat}" ${cat === defaultCategory ? 'selected' : ''}>${cat}</option>`
-      ).join('');
+      categorySelectEl.innerHTML = categories.map(cat => {
+        const isSelected = cat.val.toLowerCase() === defaultCategory.toLowerCase() || cat.val === defaultCategory;
+        return `<option value="${cat.val}" ${isSelected ? 'selected' : ''}>${cat.label}</option>`;
+      }).join('');
     }
 
     // Modal & Choice controls
