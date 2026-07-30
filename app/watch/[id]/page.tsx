@@ -10,7 +10,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, getDocs, query, limit } from 'firebase/firestore';
 import { Movie, enrichMovieWithTmdb, formatRuntime } from '@/lib/movies';
 
-type ServerSource = 'vidsrc_to' | 'vidsrc_xyz' | 'vidsrc_me' | 'vidsrc_pro' | 'vidsrc_cc' | 'direct';
+type ServerSource = 'vidsrc_to' | 'vidsrc_xyz' | 'vidsrc_me' | 'vidsrc_pro' | 'vidsrc_cc' | 'twoembed_cc' | 'twoembed_skin' | 'direct';
 
 export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -83,11 +83,17 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   const isSeries = movie.type === 'series' || movie.genre.toLowerCase().includes('series') || movie.genre.toLowerCase().includes('drama') || movie.genre.toLowerCase().includes('anime');
   const tmdbId = movie.tmdbId;
 
-  // Build VidSrc URL
+  // Build VidSrc & 2Embed Streaming URL
   let embedUrl: string | null = null;
   if (tmdbId && selectedServer !== 'direct') {
     if (isSeries) {
       switch (selectedServer) {
+        case 'twoembed_cc':
+          embedUrl = `https://www.2embed.cc/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
+          break;
+        case 'twoembed_skin':
+          embedUrl = `https://www.2embed.skin/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
+          break;
         case 'vidsrc_to':
           embedUrl = `https://vidsrc.to/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
           break;
@@ -108,6 +114,12 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
       }
     } else {
       switch (selectedServer) {
+        case 'twoembed_cc':
+          embedUrl = `https://www.2embed.cc/embed/movie/${tmdbId}`;
+          break;
+        case 'twoembed_skin':
+          embedUrl = `https://www.2embed.skin/embed/movie/${tmdbId}`;
+          break;
         case 'vidsrc_to':
           embedUrl = `https://vidsrc.to/embed/movie/${tmdbId}`;
           break;
@@ -174,6 +186,28 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                 </button>
 
                 <button
+                  onClick={() => setSelectedServer('twoembed_cc')}
+                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
+                    selectedServer === 'twoembed_cc'
+                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  🎬 2Embed Server 1
+                </button>
+
+                <button
+                  onClick={() => setSelectedServer('twoembed_skin')}
+                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
+                    selectedServer === 'twoembed_skin'
+                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  🚀 2Embed Server 2
+                </button>
+
+                <button
                   onClick={() => setSelectedServer('vidsrc_xyz')}
                   className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
                     selectedServer === 'vidsrc_xyz'
@@ -181,7 +215,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                       : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                   }`}
                 >
-                  🚀 VidSrc Server 2
+                  🌐 VidSrc Server 2
                 </button>
 
                 <button
@@ -192,18 +226,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                       : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                   }`}
                 >
-                  🎬 VidSrc Server 3
-                </button>
-
-                <button
-                  onClick={() => setSelectedServer('vidsrc_pro')}
-                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
-                    selectedServer === 'vidsrc_pro'
-                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
-                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  🌐 VidSrc Server 4
+                  ✨ VidSrc Server 3
                 </button>
               </>
             )}
@@ -340,20 +363,33 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex items-center gap-3 shrink-0">
-              <a 
-                href={movie.videoUrl} 
-                download 
-                target="_blank"
-                rel="noreferrer"
-                className="bg-accent hover:bg-accent/80 text-white px-6 py-3 rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-accent/20 flex items-center gap-2 click-effect active:scale-95 touch-manipulation cursor-pointer"
-              >
-                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                </svg>
-                Download File
-              </a>
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              {tmdbId && (
+                <a 
+                  href={isSeries ? `https://www.2embed.cc/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://www.2embed.cc/embed/movie/${tmdbId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-accent hover:bg-accent/80 text-white px-5 py-3 rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-accent/20 flex items-center gap-2 click-effect active:scale-95 touch-manipulation cursor-pointer"
+                >
+                  <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                  </svg>
+                  2Embed Download
+                </a>
+              )}
+
+              {movie.videoUrl && (
+                <a 
+                  href={movie.videoUrl} 
+                  download 
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-5 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 click-effect active:scale-95 touch-manipulation cursor-pointer"
+                >
+                  📥 Direct MP4 Download
+                </a>
+              )}
             </div>
           </div>
 
