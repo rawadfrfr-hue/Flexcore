@@ -10,7 +10,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, getDocs, query, limit } from 'firebase/firestore';
 import { Movie, enrichMovieWithTmdb, formatRuntime } from '@/lib/movies';
 
-type ServerSource = 'vidsrc_to' | 'vidsrc_xyz' | 'vidsrc_me' | 'vidsrc_pro' | 'vidsrc_cc' | 'twoembed_cc' | 'twoembed_skin' | 'direct';
+type ServerSource = 'vidsrc_to' | 'vidsrc_xyz' | 'vidsrc_me' | 'vidsrc_pro' | 'vidsrc_cc' | 'direct';
 
 export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -23,6 +23,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   const [selectedServer, setSelectedServer] = useState<ServerSource>('vidsrc_to');
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
+  const [showDownloadModal, setShowDownloadModal] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadMovie() {
@@ -83,17 +84,11 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   const isSeries = movie.type === 'series' || movie.genre.toLowerCase().includes('series') || movie.genre.toLowerCase().includes('drama') || movie.genre.toLowerCase().includes('anime');
   const tmdbId = movie.tmdbId;
 
-  // Build VidSrc & 2Embed Streaming URL
+  // Build VidSrc URL
   let embedUrl: string | null = null;
   if (tmdbId && selectedServer !== 'direct') {
     if (isSeries) {
       switch (selectedServer) {
-        case 'twoembed_cc':
-          embedUrl = `https://www.2embed.cc/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
-          break;
-        case 'twoembed_skin':
-          embedUrl = `https://www.2embed.skin/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
-          break;
         case 'vidsrc_to':
           embedUrl = `https://vidsrc.to/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
           break;
@@ -114,12 +109,6 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
       }
     } else {
       switch (selectedServer) {
-        case 'twoembed_cc':
-          embedUrl = `https://www.2embed.cc/embed/movie/${tmdbId}`;
-          break;
-        case 'twoembed_skin':
-          embedUrl = `https://www.2embed.skin/embed/movie/${tmdbId}`;
-          break;
         case 'vidsrc_to':
           embedUrl = `https://vidsrc.to/embed/movie/${tmdbId}`;
           break;
@@ -186,28 +175,6 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                 </button>
 
                 <button
-                  onClick={() => setSelectedServer('twoembed_cc')}
-                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
-                    selectedServer === 'twoembed_cc'
-                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
-                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  🎬 2Embed Server 1
-                </button>
-
-                <button
-                  onClick={() => setSelectedServer('twoembed_skin')}
-                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
-                    selectedServer === 'twoembed_skin'
-                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
-                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  🚀 2Embed Server 2
-                </button>
-
-                <button
                   onClick={() => setSelectedServer('vidsrc_xyz')}
                   className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
                     selectedServer === 'vidsrc_xyz'
@@ -215,7 +182,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                       : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                   }`}
                 >
-                  🌐 VidSrc Server 2
+                  🚀 VidSrc Server 2
                 </button>
 
                 <button
@@ -226,7 +193,18 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                       : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                   }`}
                 >
-                  ✨ VidSrc Server 3
+                  🎬 VidSrc Server 3
+                </button>
+
+                <button
+                  onClick={() => setSelectedServer('vidsrc_pro')}
+                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
+                    selectedServer === 'vidsrc_pro'
+                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  🌐 VidSrc Server 4
                 </button>
               </>
             )}
@@ -363,33 +341,17 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
-              {tmdbId && (
-                <a 
-                  href={isSeries ? `https://www.2embed.cc/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://www.2embed.cc/embed/movie/${tmdbId}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="bg-accent hover:bg-accent/80 text-white px-5 py-3 rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-accent/20 flex items-center gap-2 click-effect active:scale-95 touch-manipulation cursor-pointer"
-                >
-                  <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                  </svg>
-                  2Embed Download
-                </a>
-              )}
-
-              {movie.videoUrl && (
-                <a 
-                  href={movie.videoUrl} 
-                  download 
-                  target="_blank"
-                  rel="noreferrer"
-                  className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-5 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 click-effect active:scale-95 touch-manipulation cursor-pointer"
-                >
-                  📥 Direct MP4 Download
-                </a>
-              )}
+            <div className="flex items-center gap-3 shrink-0">
+              <button 
+                onClick={() => setShowDownloadModal(true)}
+                className="bg-accent hover:bg-accent/80 text-white px-6 py-3 rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-accent/20 flex items-center gap-2 click-effect active:scale-95 touch-manipulation cursor-pointer"
+              >
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                </svg>
+                Download Options 📥
+              </button>
             </div>
           </div>
 
@@ -475,6 +437,118 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
         >
           <div className="relative max-w-[1200px] w-full aspect-video rounded-xl overflow-hidden border border-white/20">
             <Image src={lightboxImg} alt="Enlarged screenshot" fill className="object-contain" referrerPolicy="no-referrer" />
+          </div>
+        </div>
+      )}
+
+      {/* Automated VidSrc Download Options Modal */}
+      {showDownloadModal && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-[#12121a] border border-white/15 rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowDownloadModal(false)}
+              className="absolute top-5 right-5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all"
+            >
+              ✕
+            </button>
+
+            <div className="space-y-1">
+              <span className="text-xs font-bold text-accent uppercase tracking-wider">Automated Downloads</span>
+              <h2 className="text-xl sm:text-2xl font-black text-white">Download {movie.title}</h2>
+              <p className="text-xs text-gray-400">
+                {isSeries ? `Selected: Season ${selectedSeason}, Episode ${selectedEpisode}` : 'Select a fast automated server source below.'}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {tmdbId ? (
+                <>
+                  <a
+                    href={isSeries ? `https://vidsrc.to/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://vidsrc.to/embed/movie/${tmdbId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-accent/20 border border-white/10 hover:border-accent/40 rounded-2xl transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-9 h-9 rounded-xl bg-accent/20 border border-accent/40 text-accent font-extrabold flex items-center justify-center text-sm">
+                        1080p
+                      </span>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-white group-hover:text-accent transition-colors">⚡ VidSrc Fast Server 1</div>
+                        <div className="text-[10px] text-gray-400">Full HD Stream & Download Link</div>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-accent bg-accent/10 px-3 py-1.5 rounded-xl border border-accent/20">Download ➔</span>
+                  </a>
+
+                  <a
+                    href={isSeries ? `https://vidsrc.xyz/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://vidsrc.xyz/embed/movie/${tmdbId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-accent/20 border border-white/10 hover:border-accent/40 rounded-2xl transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/40 text-blue-400 font-extrabold flex items-center justify-center text-sm">
+                        720p
+                      </span>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-white group-hover:text-accent transition-colors">🚀 VidSrc Server 2 (High Speed)</div>
+                        <div className="text-[10px] text-gray-400">HD Fast Multi-Mirror</div>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-accent bg-accent/10 px-3 py-1.5 rounded-xl border border-accent/20">Download ➔</span>
+                  </a>
+
+                  <a
+                    href={isSeries ? `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&season=${selectedSeason}&episode=${selectedEpisode}` : `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-accent/20 border border-white/10 hover:border-accent/40 rounded-2xl transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-400 font-extrabold flex items-center justify-center text-sm">
+                        480p
+                      </span>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-white group-hover:text-accent transition-colors">🎬 VidSrc Server 3</div>
+                        <div className="text-[10px] text-gray-400">Standard Quality Direct Stream</div>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-accent bg-accent/10 px-3 py-1.5 rounded-xl border border-accent/20">Download ➔</span>
+                  </a>
+                </>
+              ) : null}
+
+              {movie.videoUrl && (
+                <a
+                  href={movie.videoUrl}
+                  download
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-500/40 rounded-2xl transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-extrabold flex items-center justify-center text-sm">
+                      MP4
+                    </span>
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">📁 Direct File Download</div>
+                      <div className="text-[10px] text-gray-400">Direct MP4 Link</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">Direct File ➔</span>
+                </a>
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-white/10 text-center">
+              <button 
+                onClick={() => setShowDownloadModal(false)}
+                className="text-xs text-gray-400 hover:text-white transition-colors"
+              >
+                Close Window
+              </button>
+            </div>
           </div>
         </div>
       )}
