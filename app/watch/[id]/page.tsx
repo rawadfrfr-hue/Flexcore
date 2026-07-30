@@ -10,7 +10,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, getDocs, query, limit } from 'firebase/firestore';
 import { Movie, enrichMovieWithTmdb, formatRuntime } from '@/lib/movies';
 
-type ServerSource = 'vidsrc_to' | 'vidsrc_xyz' | 'vidsrc_me' | 'vidsrc_pro' | 'vidsrc_cc' | 'direct';
+type ServerSource = 'vidsrc_to' | 'autoembed' | 'vidlink' | 'twoembed' | 'smashystream' | 'vidsrc_icu' | 'vidsrc_cc' | 'direct';
 
 export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -112,7 +112,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   const isSeries = movie.type === 'series' || movie.type === 'tv' || (movie.type !== 'movie' && (movie.category?.toLowerCase().includes('series') || movie.category?.toLowerCase() === 'k-drama' || movie.category?.toLowerCase() === 'anime'));
   const tmdbId = movie.tmdbId;
 
-  // Build VidSrc URL
+  // Build Multi-Provider Embed URL
   let embedUrl: string | null = null;
   if (tmdbId && selectedServer !== 'direct') {
     if (isSeries) {
@@ -120,14 +120,20 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
         case 'vidsrc_to':
           embedUrl = `https://vidsrc.to/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
           break;
-        case 'vidsrc_xyz':
-          embedUrl = `https://vidsrc.xyz/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
+        case 'autoembed':
+          embedUrl = `https://embed.su/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
           break;
-        case 'vidsrc_me':
-          embedUrl = `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&season=${selectedSeason}&episode=${selectedEpisode}`;
+        case 'vidlink':
+          embedUrl = `https://vidlink.pro/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
           break;
-        case 'vidsrc_pro':
-          embedUrl = `https://vidsrc.pro/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
+        case 'twoembed':
+          embedUrl = `https://www.2embed.cc/embedtv/${tmdbId}&s=${selectedSeason}&e=${selectedEpisode}`;
+          break;
+        case 'smashystream':
+          embedUrl = `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}&s=${selectedSeason}&e=${selectedEpisode}`;
+          break;
+        case 'vidsrc_icu':
+          embedUrl = `https://vidsrc.icu/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
           break;
         case 'vidsrc_cc':
           embedUrl = `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
@@ -140,14 +146,20 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
         case 'vidsrc_to':
           embedUrl = `https://vidsrc.to/embed/movie/${tmdbId}`;
           break;
-        case 'vidsrc_xyz':
-          embedUrl = `https://vidsrc.xyz/embed/movie/${tmdbId}`;
+        case 'autoembed':
+          embedUrl = `https://embed.su/embed/movie/${tmdbId}`;
           break;
-        case 'vidsrc_me':
-          embedUrl = `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`;
+        case 'vidlink':
+          embedUrl = `https://vidlink.pro/movie/${tmdbId}`;
           break;
-        case 'vidsrc_pro':
-          embedUrl = `https://vidsrc.pro/embed/movie/${tmdbId}`;
+        case 'twoembed':
+          embedUrl = `https://www.2embed.cc/embed/movie/${tmdbId}`;
+          break;
+        case 'smashystream':
+          embedUrl = `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}`;
+          break;
+        case 'vidsrc_icu':
+          embedUrl = `https://vidsrc.icu/embed/movie/${tmdbId}`;
           break;
         case 'vidsrc_cc':
           embedUrl = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
@@ -181,71 +193,106 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
           </span>
         </div>
 
-        {/* Server Selection Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f0f14] p-3.5 rounded-2xl border border-white/10">
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-300 shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
-            Streaming Server:
+        {/* Multi-Provider Streaming Server Selector */}
+        <div className="bg-[#0f0f14] p-4 rounded-2xl border border-white/10 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2 text-xs font-extrabold text-gray-200">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Streaming Provider:</span>
+              <span className="text-[10px] text-gray-400 font-normal hidden sm:inline">(If one server is slow or unavailable, click another)</span>
+            </div>
+            <span className="text-[10px] bg-accent/20 text-accent font-bold px-2.5 py-0.5 rounded-full border border-accent/30">
+              Auto-Multi Provider
+            </span>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10">
             {tmdbId && (
               <>
                 <button
                   onClick={() => setSelectedServer('vidsrc_to')}
-                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
+                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
                     selectedServer === 'vidsrc_to'
-                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
                       : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                   }`}
                 >
-                  ⚡ VidSrc Server 1
+                  <span>⚡ VidSrc Primary</span>
+                  <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono">1080p</span>
                 </button>
 
                 <button
-                  onClick={() => setSelectedServer('vidsrc_xyz')}
-                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
-                    selectedServer === 'vidsrc_xyz'
-                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                  onClick={() => setSelectedServer('autoembed')}
+                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                    selectedServer === 'autoembed'
+                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
                       : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                   }`}
                 >
-                  🚀 VidSrc Server 2
+                  <span>🚀 AutoEmbed</span>
+                  <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-mono">Ultra HD</span>
                 </button>
 
                 <button
-                  onClick={() => setSelectedServer('vidsrc_me')}
-                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
-                    selectedServer === 'vidsrc_me'
-                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                  onClick={() => setSelectedServer('vidlink')}
+                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                    selectedServer === 'vidlink'
+                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
                       : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                   }`}
                 >
-                  🎬 VidSrc Server 3
+                  <span>🎬 VidLink</span>
+                  <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded font-mono">Auto-Subs</span>
                 </button>
 
                 <button
-                  onClick={() => setSelectedServer('vidsrc_pro')}
-                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
-                    selectedServer === 'vidsrc_pro'
-                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                  onClick={() => setSelectedServer('twoembed')}
+                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                    selectedServer === 'twoembed'
+                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
                       : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                   }`}
                 >
-                  🌐 VidSrc Server 4
+                  <span>🌐 2Embed</span>
+                  <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-mono">Multi-Lang</span>
+                </button>
+
+                <button
+                  onClick={() => setSelectedServer('smashystream')}
+                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                    selectedServer === 'smashystream'
+                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  <span>✨ SmashyStream</span>
+                  <span className="text-[9px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded font-mono">Fast Mirror</span>
+                </button>
+
+                <button
+                  onClick={() => setSelectedServer('vidsrc_icu')}
+                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                    selectedServer === 'vidsrc_icu'
+                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  <span>🍿 VidSrc ICU</span>
+                  <span className="text-[9px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded font-mono">Sub/Dub</span>
                 </button>
               </>
             )}
 
             <button
               onClick={() => setSelectedServer('direct')}
-              className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
+              className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
                 selectedServer === 'direct'
-                  ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                  ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
                   : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
               }`}
             >
-              📽️ Direct MP4
+              <span>📽️ Direct MP4</span>
+              <span className="text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded font-mono">Upload</span>
             </button>
           </div>
         </div>
