@@ -538,7 +538,7 @@
           if (details.images && details.images.backdrops) {
              movieObj.backdrops = details.images.backdrops.slice(0, 6).map(img => `https://image.tmdb.org/t/p/w1280${img.file_path}`);
           }
-          delete movieObj.tmdbId;
+          movieObj.seasonsCount = details.number_of_seasons || (details.seasons ? details.seasons.length : 1);
         }
 
         await addDoc(collection(db, 'movies'), movieObj);
@@ -675,6 +675,8 @@
               const backdrops = details.images?.backdrops ? details.images.backdrops.slice(0, 8).map(img => `https://image.tmdb.org/t/p/w1280${img.file_path}`) : [];
 
               await updateDoc(doc(db, 'movies', movie.id), {
+                tmdbId: tmdbId,
+                seasonsCount: details.number_of_seasons || (details.seasons ? details.seasons.length : (movie.seasonsCount || 1)),
                 runtime: details.runtime || (details.episode_run_time ? details.episode_run_time[0] : movie.runtime) || null,
                 voteAverage: details.vote_average || movie.voteAverage || null,
                 voteCount: details.vote_count || movie.voteCount || null,

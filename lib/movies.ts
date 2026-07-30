@@ -8,6 +8,7 @@ export interface Movie {
   description: string;
   posterUrl: string;
   videoUrl: string;
+  tmdbId?: string | number;
   type?: 'movie' | 'series' | string;
   category?: string;
   runtime?: number;
@@ -18,12 +19,14 @@ export interface Movie {
   tagline?: string;
   topCast?: string[];
   backdrops?: string[];
+  seasonsCount?: number;
 }
 
 const TMDB_API_KEY = "40997d508f165094637f1d6f8a9ab148";
 
 export async function enrichMovieWithTmdb(movie: Movie): Promise<Movie> {
   if (
+    movie.tmdbId &&
     movie.backdrops &&
     movie.backdrops.length > 0 &&
     movie.topCast &&
@@ -39,15 +42,21 @@ export async function enrichMovieWithTmdb(movie: Movie): Promise<Movie> {
     const endpoint = isSeries ? 'search/tv' : 'search/movie';
     const detailsEndpoint = isSeries ? 'tv' : 'movie';
 
-    const searchRes = await fetch(
-      `https://api.themoviedb.org/3/${endpoint}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(movie.title)}`
-    );
-    const searchData = await searchRes.json();
+    let tmdbIdToUse = movie.tmdbId;
 
-    if (searchData.results && searchData.results.length > 0) {
-      const tmdbId = searchData.results[0].id;
+    if (!tmdbIdToUse) {
+      const searchRes = await fetch(
+        `https://api.themoviedb.org/3/${endpoint}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(movie.title)}`
+      );
+      const searchData = await searchRes.json();
+      if (searchData.results && searchData.results.length > 0) {
+        tmdbIdToUse = searchData.results[0].id;
+      }
+    }
+
+    if (tmdbIdToUse) {
       const detailsRes = await fetch(
-        `https://api.themoviedb.org/3/${detailsEndpoint}/${tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=credits,images`
+        `https://api.themoviedb.org/3/${detailsEndpoint}/${tmdbIdToUse}?api_key=${TMDB_API_KEY}&append_to_response=credits,images`
       );
       const details = await detailsRes.json();
 
@@ -59,8 +68,12 @@ export async function enrichMovieWithTmdb(movie: Movie): Promise<Movie> {
         ? details.images.backdrops.slice(0, 8).map((img: any) => `https://image.tmdb.org/t/p/w1280${img.file_path}`)
         : undefined;
 
+      const seasons = details.number_of_seasons || (details.seasons ? details.seasons.length : 1);
+
       return {
         ...movie,
+        tmdbId: movie.tmdbId || tmdbIdToUse,
+        seasonsCount: movie.seasonsCount || seasons,
         runtime: movie.runtime || details.runtime || (details.episode_run_time ? details.episode_run_time[0] : undefined),
         voteAverage: movie.voteAverage || details.vote_average || undefined,
         voteCount: movie.voteCount || details.vote_count || undefined,

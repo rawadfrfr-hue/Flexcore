@@ -10,12 +10,19 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, getDocs, query, limit } from 'firebase/firestore';
 import { Movie, enrichMovieWithTmdb, formatRuntime } from '@/lib/movies';
 
+type ServerSource = 'vidsrc_to' | 'vidsrc_xyz' | 'vidsrc_me' | 'vidsrc_pro' | 'vidsrc_cc' | 'direct';
+
 export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [movie, setMovie] = useState<Movie | null>(null);
   const [relatedMovies, setRelatedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+
+  // VidSrc Streaming States
+  const [selectedServer, setSelectedServer] = useState<ServerSource>('vidsrc_to');
+  const [selectedSeason, setSelectedSeason] = useState<number>(1);
+  const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
 
   useEffect(() => {
     async function loadMovie() {
@@ -73,8 +80,60 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
     );
   }
 
+  const isSeries = movie.type === 'series' || movie.genre.toLowerCase().includes('series') || movie.genre.toLowerCase().includes('drama') || movie.genre.toLowerCase().includes('anime');
+  const tmdbId = movie.tmdbId;
+
+  // Build VidSrc URL
+  let embedUrl: string | null = null;
+  if (tmdbId && selectedServer !== 'direct') {
+    if (isSeries) {
+      switch (selectedServer) {
+        case 'vidsrc_to':
+          embedUrl = `https://vidsrc.to/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
+          break;
+        case 'vidsrc_xyz':
+          embedUrl = `https://vidsrc.xyz/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
+          break;
+        case 'vidsrc_me':
+          embedUrl = `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&season=${selectedSeason}&episode=${selectedEpisode}`;
+          break;
+        case 'vidsrc_pro':
+          embedUrl = `https://vidsrc.pro/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
+          break;
+        case 'vidsrc_cc':
+          embedUrl = `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
+          break;
+        default:
+          embedUrl = `https://vidsrc.to/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
+      }
+    } else {
+      switch (selectedServer) {
+        case 'vidsrc_to':
+          embedUrl = `https://vidsrc.to/embed/movie/${tmdbId}`;
+          break;
+        case 'vidsrc_xyz':
+          embedUrl = `https://vidsrc.xyz/embed/movie/${tmdbId}`;
+          break;
+        case 'vidsrc_me':
+          embedUrl = `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`;
+          break;
+        case 'vidsrc_pro':
+          embedUrl = `https://vidsrc.pro/embed/movie/${tmdbId}`;
+          break;
+        case 'vidsrc_cc':
+          embedUrl = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
+          break;
+        default:
+          embedUrl = `https://vidsrc.to/embed/movie/${tmdbId}`;
+      }
+    }
+  }
+
+  const seasonsList = Array.from({ length: movie.seasonsCount || 5 }, (_, i) => i + 1);
+  const episodesList = Array.from({ length: 24 }, (_, i) => i + 1);
+
   return (
-    <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans select-none">
       <Navbar />
 
       {/* Main Full-Screen Watch Container */}
@@ -89,22 +148,154 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
           </Link>
 
           <span className="text-xs text-accent font-bold bg-accent/15 border border-accent/30 px-3 py-1 rounded-full uppercase tracking-wider">
-            {movie.type === 'series' ? 'Web Series' : 'Movie'} • {movie.category || 'Featured'}
+            {isSeries ? `Web Series • S${selectedSeason} E${selectedEpisode}` : 'Movie'} • {movie.category || 'Featured'}
           </span>
         </div>
+
+        {/* Server Selection Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f0f14] p-3.5 rounded-2xl border border-white/10">
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-300 shrink-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+            Streaming Server:
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            {tmdbId && (
+              <>
+                <button
+                  onClick={() => setSelectedServer('vidsrc_to')}
+                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
+                    selectedServer === 'vidsrc_to'
+                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  ⚡ VidSrc Server 1
+                </button>
+
+                <button
+                  onClick={() => setSelectedServer('vidsrc_xyz')}
+                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
+                    selectedServer === 'vidsrc_xyz'
+                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  🚀 VidSrc Server 2
+                </button>
+
+                <button
+                  onClick={() => setSelectedServer('vidsrc_me')}
+                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
+                    selectedServer === 'vidsrc_me'
+                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  🎬 VidSrc Server 3
+                </button>
+
+                <button
+                  onClick={() => setSelectedServer('vidsrc_pro')}
+                  className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
+                    selectedServer === 'vidsrc_pro'
+                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  🌐 VidSrc Server 4
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={() => setSelectedServer('direct')}
+              className={`shrink-0 text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
+                selectedServer === 'direct'
+                  ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
+                  : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+              }`}
+            >
+              📽️ Direct MP4
+            </button>
+          </div>
+        </div>
+
+        {/* Series Season & Episode Controls */}
+        {isSeries && tmdbId && (
+          <div className="bg-[#0f0f14] p-4 rounded-2xl border border-white/10 space-y-4">
+            {/* Seasons Row */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+                Select Season:
+              </span>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {seasonsList.map(sNum => (
+                  <button
+                    key={sNum}
+                    onClick={() => {
+                      setSelectedSeason(sNum);
+                      setSelectedEpisode(1);
+                    }}
+                    className={`shrink-0 text-xs px-4 py-1.5 rounded-lg font-bold transition-all click-effect touch-manipulation ${
+                      selectedSeason === sNum
+                        ? 'bg-white text-black font-extrabold shadow-md'
+                        : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
+                    }`}
+                  >
+                    Season {sNum}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Episodes Grid */}
+            <div className="space-y-2 pt-2 border-t border-white/10">
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+                Select Episode (Season {selectedSeason}):
+              </span>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {episodesList.map(eNum => (
+                  <button
+                    key={eNum}
+                    onClick={() => setSelectedEpisode(eNum)}
+                    className={`shrink-0 min-w-[44px] h-9 text-xs rounded-lg font-bold transition-all flex items-center justify-center click-effect touch-manipulation ${
+                      selectedEpisode === eNum
+                        ? 'bg-accent text-white font-extrabold shadow-md border border-accent'
+                        : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
+                    }`}
+                  >
+                    EP {eNum}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Full Theater Mode Video Player */}
         <section className="relative w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/15">
           <div className="w-full aspect-video md:aspect-[21/9] bg-black relative flex items-center justify-center">
-            <video 
-              src={movie.videoUrl} 
-              controls 
-              autoPlay 
-              controlsList="nodownload"
-              className="w-full h-full object-contain"
-            >
-              Your browser does not support the video tag.
-            </video>
+            {embedUrl && selectedServer !== 'direct' ? (
+              <iframe
+                src={embedUrl}
+                className="w-full h-full border-0"
+                allowFullScreen
+                allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
+                referrerPolicy="origin"
+                title={movie.title}
+              />
+            ) : (
+              <video 
+                src={movie.videoUrl} 
+                controls 
+                autoPlay 
+                controlsList="nodownload"
+                className="w-full h-full object-contain"
+              >
+                Your browser does not support the video tag.
+              </video>
+            )}
           </div>
         </section>
 
@@ -161,7 +352,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                   <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
                   <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
                 </svg>
-                Download MP4
+                Download File
               </a>
             </div>
           </div>
@@ -206,7 +397,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                   <div 
                     key={idx} 
                     onClick={() => setLightboxImg(img)}
-                    className="aspect-video relative rounded-xl overflow-hidden border border-white/10 cursor-pointer hover:border-accent transition-all group"
+                    className="aspect-video relative rounded-xl overflow-hidden border border-white/10 cursor-pointer hover:border-accent transition-all group click-effect touch-manipulation"
                   >
                     <Image 
                       src={img} 
