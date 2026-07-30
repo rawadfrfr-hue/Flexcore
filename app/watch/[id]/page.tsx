@@ -24,6 +24,34 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
   const [showDownloadModal, setShowDownloadModal] = useState<boolean>(false);
+  const [downloadOptions, setDownloadOptions] = useState<any[]>([]);
+  const [downloadLoading, setDownloadLoading] = useState<boolean>(false);
+
+  // Fetch Automated Downloads when modal is opened or season/episode changes
+  useEffect(() => {
+    if (showDownloadModal && movie) {
+      const currentMovie = movie;
+      async function fetchDownloads() {
+        setDownloadLoading(true);
+        try {
+          const res = await fetch(
+            `/api/downloads?tmdbId=${currentMovie.tmdbId || ''}&title=${encodeURIComponent(currentMovie.title)}&type=${currentMovie.type || 'movie'}&season=${selectedSeason}&episode=${selectedEpisode}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (data.downloads) {
+              setDownloadOptions(data.downloads);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch download links:", err);
+        } finally {
+          setDownloadLoading(false);
+        }
+      }
+      fetchDownloads();
+    }
+  }, [showDownloadModal, movie, selectedSeason, selectedEpisode]);
 
   useEffect(() => {
     async function loadMovie() {
@@ -441,10 +469,10 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
         </div>
       )}
 
-      {/* Automated VidSrc Download Options Modal */}
+      {/* Automated Torrent & Direct Download Options Modal */}
       {showDownloadModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-[#12121a] border border-white/15 rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-[#12121a] border border-white/15 rounded-3xl p-6 sm:p-8 max-w-2xl w-full space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
             <button 
               onClick={() => setShowDownloadModal(false)}
               className="absolute top-5 right-5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all"
@@ -453,113 +481,101 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
             </button>
 
             <div className="space-y-1">
-              <span className="text-xs font-bold text-accent uppercase tracking-wider">Automated Downloads</span>
+              <span className="text-xs font-bold text-accent uppercase tracking-wider">Automated Multi-Source Downloader</span>
               <h2 className="text-xl sm:text-2xl font-black text-white">Download {movie.title}</h2>
               <p className="text-xs text-gray-400">
-                {isSeries ? `Selected: Season ${selectedSeason}, Episode ${selectedEpisode}` : 'Select a fast automated server source below.'}
+                {isSeries ? `Selected: Season ${selectedSeason}, Episode ${selectedEpisode}` : 'High-speed automated download sources (YTS, 1337x, TorrentGalaxy, EZTV)'}
               </p>
             </div>
 
-            <div className="space-y-3">
-              {tmdbId ? (
-                <>
-                  {/* DL VidSrc VIP Dedicated Downloader */}
-                  <a
-                    href={isSeries ? `https://dl.vidsrc.vip/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://dl.vidsrc.vip/movie/${tmdbId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-accent/20 border border-white/10 hover:border-accent/40 rounded-2xl transition-all group"
+            <div className="overflow-y-auto space-y-3 pr-1 flex-1 scrollbar-thin scrollbar-thumb-white/10">
+              {downloadLoading ? (
+                <div className="py-12 flex flex-col items-center justify-center space-y-3">
+                  <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs text-gray-400 font-bold">Scraping fast download links from YTS, 1337x & TorrentGalaxy...</p>
+                </div>
+              ) : downloadOptions.length > 0 ? (
+                downloadOptions.map((opt) => (
+                  <div
+                    key={opt.id}
+                    className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all space-y-3"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="w-9 h-9 rounded-xl bg-accent/20 border border-accent/40 text-accent font-extrabold flex items-center justify-center text-sm">
-                        1080p
-                      </span>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-white group-hover:text-accent transition-colors">⚡ VidSrc VIP Direct Download Mirror</div>
-                        <div className="text-[10px] text-gray-400">Direct Fast File Download Server (No Stream)</div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-accent/20 border border-accent/40 text-accent">
+                            {opt.quality}
+                          </span>
+                          <span className="text-xs font-bold text-gray-300">
+                            💾 {opt.size}
+                          </span>
+                          <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                            🌱 {opt.seeders} Seeds
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-white mt-1.5 line-clamp-1">{opt.name}</h4>
+                        <span className="text-[10px] text-gray-400 font-medium">Source: {opt.source}</span>
                       </div>
                     </div>
-                    <span className="text-xs font-bold text-accent bg-accent/10 px-3 py-1.5 rounded-xl border border-accent/20">Download File ➔</span>
-                  </a>
 
-                  {/* Embed.su Downloader */}
-                  <a
-                    href={isSeries ? `https://embed.su/download/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://embed.su/download/movie/${tmdbId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-500/40 rounded-2xl transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/40 text-blue-400 font-extrabold flex items-center justify-center text-sm">
-                        720p
-                      </span>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">🚀 Embed.su Direct Downloader</div>
-                        <div className="text-[10px] text-gray-400">High-Speed Multi-Quality File Mirror</div>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20">Download File ➔</span>
-                  </a>
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+                      {/* WebTor 1-Click Web Downloader */}
+                      <a
+                        href={opt.webtorUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex-1 min-w-[140px] text-center text-xs px-3.5 py-2 rounded-xl font-bold bg-accent text-white hover:bg-accent/80 transition-all shadow-md shadow-accent/20 flex items-center justify-center gap-1.5 click-effect"
+                      >
+                        ⚡ 1-Click Web Download
+                      </a>
 
-                  {/* VidSrc.icu Downloader */}
-                  <a
-                    href={isSeries ? `https://vidsrc.icu/download/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://vidsrc.icu/download/movie/${tmdbId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/40 rounded-2xl transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-400 font-extrabold flex items-center justify-center text-sm">
-                        480p
-                      </span>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-white group-hover:text-purple-400 transition-colors">🎬 VidSrc ICU Direct File Extractor</div>
-                        <div className="text-[10px] text-gray-400">Automated Direct Video Downloader</div>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-purple-400 bg-purple-500/10 px-3 py-1.5 rounded-xl border border-purple-500/20">Download File ➔</span>
-                  </a>
+                      {/* Magnet Link */}
+                      <a
+                        href={opt.magnetUrl}
+                        className="text-xs px-3.5 py-2 rounded-xl font-bold bg-white/10 hover:bg-white/20 text-gray-200 transition-all border border-white/10 flex items-center gap-1.5 click-effect"
+                      >
+                        🧲 Magnet Link
+                      </a>
 
-                  {/* MultiEmbed Auto Download */}
-                  <a
-                    href={isSeries ? `https://multiembed.mov/download?tmdb=${tmdbId}&s=${selectedSeason}&e=${selectedEpisode}` : `https://multiembed.mov/download?tmdb=${tmdbId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/40 rounded-2xl transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 font-extrabold flex items-center justify-center text-sm">
-                        HD
-                      </span>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-white group-hover:text-amber-400 transition-colors">🌐 MultiEmbed Fast Downloader</div>
-                        <div className="text-[10px] text-gray-400">Multi-source Direct Download Portal</div>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20">Download File ➔</span>
-                  </a>
-                </>
-              ) : null}
-
-              {movie.videoUrl && (
-                <a
-                  href={movie.videoUrl}
-                  download
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-500/40 rounded-2xl transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-extrabold flex items-center justify-center text-sm">
-                      MP4
-                    </span>
-                    <div className="text-left">
-                      <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">📁 Direct File Download</div>
-                      <div className="text-[10px] text-gray-400">Direct MP4 Link</div>
+                      {/* Torrent File if available */}
+                      {opt.torrentUrl && (
+                        <a
+                          href={opt.torrentUrl}
+                          download
+                          className="text-xs px-3.5 py-2 rounded-xl font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition-all flex items-center gap-1.5 click-effect"
+                        >
+                          📄 .Torrent File
+                        </a>
+                      )}
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">Direct File ➔</span>
-                </a>
+                ))
+              ) : (
+                <div className="py-8 text-center space-y-3 bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <p className="text-sm text-gray-300 font-semibold">No automated torrent sources found for this title.</p>
+                  <p className="text-xs text-gray-400">You can use direct video streaming or try another server.</p>
+                </div>
+              )}
+
+              {movie.videoUrl && (
+                <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl space-y-2 mt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block">Direct Video Source</span>
+                      <h4 className="text-sm font-bold text-white">Direct MP4 Video File</h4>
+                    </div>
+                    <a
+                      href={movie.videoUrl}
+                      download
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-bold bg-emerald-500 text-black px-4 py-2 rounded-xl hover:bg-emerald-400 transition-all shadow-md click-effect"
+                    >
+                      Download MP4 ➔
+                    </a>
+                  </div>
+                </div>
               )}
             </div>
 
