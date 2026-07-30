@@ -463,8 +463,9 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
             <div className="space-y-3">
               {tmdbId ? (
                 <>
+                  {/* DL VidSrc VIP Dedicated Downloader */}
                   <a
-                    href={isSeries ? `https://vidsrc.to/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://vidsrc.to/embed/movie/${tmdbId}`}
+                    href={isSeries ? `https://dl.vidsrc.vip/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://dl.vidsrc.vip/movie/${tmdbId}`}
                     target="_blank"
                     rel="noreferrer"
                     className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-accent/20 border border-white/10 hover:border-accent/40 rounded-2xl transition-all group"
@@ -474,47 +475,68 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                         1080p
                       </span>
                       <div className="text-left">
-                        <div className="text-xs font-bold text-white group-hover:text-accent transition-colors">⚡ VidSrc Fast Server 1</div>
-                        <div className="text-[10px] text-gray-400">Full HD Stream & Download Link</div>
+                        <div className="text-xs font-bold text-white group-hover:text-accent transition-colors">⚡ VidSrc VIP Direct Download Mirror</div>
+                        <div className="text-[10px] text-gray-400">Direct Fast File Download Server (No Stream)</div>
                       </div>
                     </div>
-                    <span className="text-xs font-bold text-accent bg-accent/10 px-3 py-1.5 rounded-xl border border-accent/20">Download ➔</span>
+                    <span className="text-xs font-bold text-accent bg-accent/10 px-3 py-1.5 rounded-xl border border-accent/20">Download File ➔</span>
                   </a>
 
+                  {/* Embed.su Downloader */}
                   <a
-                    href={isSeries ? `https://vidsrc.xyz/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://vidsrc.xyz/embed/movie/${tmdbId}`}
+                    href={isSeries ? `https://embed.su/download/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://embed.su/download/movie/${tmdbId}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-accent/20 border border-white/10 hover:border-accent/40 rounded-2xl transition-all group"
+                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-500/40 rounded-2xl transition-all group"
                   >
                     <div className="flex items-center gap-3">
                       <span className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/40 text-blue-400 font-extrabold flex items-center justify-center text-sm">
                         720p
                       </span>
                       <div className="text-left">
-                        <div className="text-xs font-bold text-white group-hover:text-accent transition-colors">🚀 VidSrc Server 2 (High Speed)</div>
-                        <div className="text-[10px] text-gray-400">HD Fast Multi-Mirror</div>
+                        <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">🚀 Embed.su Direct Downloader</div>
+                        <div className="text-[10px] text-gray-400">High-Speed Multi-Quality File Mirror</div>
                       </div>
                     </div>
-                    <span className="text-xs font-bold text-accent bg-accent/10 px-3 py-1.5 rounded-xl border border-accent/20">Download ➔</span>
+                    <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20">Download File ➔</span>
                   </a>
 
+                  {/* VidSrc.icu Downloader */}
                   <a
-                    href={isSeries ? `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&season=${selectedSeason}&episode=${selectedEpisode}` : `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`}
+                    href={isSeries ? `https://vidsrc.icu/download/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}` : `https://vidsrc.icu/download/movie/${tmdbId}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-accent/20 border border-white/10 hover:border-accent/40 rounded-2xl transition-all group"
+                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/40 rounded-2xl transition-all group"
                   >
                     <div className="flex items-center gap-3">
                       <span className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-400 font-extrabold flex items-center justify-center text-sm">
                         480p
                       </span>
                       <div className="text-left">
-                        <div className="text-xs font-bold text-white group-hover:text-accent transition-colors">🎬 VidSrc Server 3</div>
-                        <div className="text-[10px] text-gray-400">Standard Quality Direct Stream</div>
+                        <div className="text-xs font-bold text-white group-hover:text-purple-400 transition-colors">🎬 VidSrc ICU Direct File Extractor</div>
+                        <div className="text-[10px] text-gray-400">Automated Direct Video Downloader</div>
                       </div>
                     </div>
-                    <span className="text-xs font-bold text-accent bg-accent/10 px-3 py-1.5 rounded-xl border border-accent/20">Download ➔</span>
+                    <span className="text-xs font-bold text-purple-400 bg-purple-500/10 px-3 py-1.5 rounded-xl border border-purple-500/20">Download File ➔</span>
+                  </a>
+
+                  {/* MultiEmbed Auto Download */}
+                  <a
+                    href={isSeries ? `https://multiembed.mov/download?tmdb=${tmdbId}&s=${selectedSeason}&e=${selectedEpisode}` : `https://multiembed.mov/download?tmdb=${tmdbId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/40 rounded-2xl transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 font-extrabold flex items-center justify-center text-sm">
+                        HD
+                      </span>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-white group-hover:text-amber-400 transition-colors">🌐 MultiEmbed Fast Downloader</div>
+                        <div className="text-[10px] text-gray-400">Multi-source Direct Download Portal</div>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20">Download File ➔</span>
                   </a>
                 </>
               ) : null}
