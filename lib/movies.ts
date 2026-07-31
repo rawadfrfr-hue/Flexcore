@@ -20,6 +20,30 @@ export interface Movie {
   topCast?: string[];
   backdrops?: string[];
   seasonsCount?: number;
+  createdAt?: number | string;
+}
+
+export function isSeriesItem(m: Movie): boolean {
+  if (m.type === 'series' || m.type === 'tv') return true;
+  const cat = (m.category || '').toLowerCase();
+  const genre = (m.genre || '').toLowerCase();
+  if (cat.includes('series') || cat === 'k-drama' || cat === 'anime' || genre.includes('tv series') || genre.includes('web series')) {
+    return true;
+  }
+  if (m.type === 'movie') return false;
+  return false;
+}
+
+export function sortNewestFirst(items: Movie[]): Movie[] {
+  const reversed = [...items].reverse();
+  return reversed.sort((a, b) => {
+    const tA = typeof a.createdAt === 'number' ? a.createdAt : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+    const tB = typeof b.createdAt === 'number' ? b.createdAt : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+    if (tA && tB && tA !== tB) {
+      return tB - tA;
+    }
+    return 0;
+  });
 }
 
 const TMDB_API_KEY = "40997d508f165094637f1d6f8a9ab148";
@@ -38,7 +62,7 @@ export async function enrichMovieWithTmdb(movie: Movie): Promise<Movie> {
   }
 
   try {
-    const isSeries = movie.type === 'series' || movie.genre.toLowerCase().includes('series') || movie.genre.toLowerCase().includes('drama') || movie.genre.toLowerCase().includes('anime');
+    const isSeries = isSeriesItem(movie);
     const endpoint = isSeries ? 'search/tv' : 'search/movie';
     const detailsEndpoint = isSeries ? 'tv' : 'movie';
 

@@ -41,6 +41,8 @@ export default function MovieCard({ movie }: { movie: Movie }) {
           </div>
         )}
 
+
+
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
           <span className="bg-accent text-white text-xs font-bold py-1.5 px-3 rounded w-full text-center shadow">
             ▶ Watch Now

@@ -186,8 +186,19 @@
             <p class="text-xs text-gray-500 mt-1">Leave empty to auto-fetch from TMDB if available.</p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1">Video URL (MP4)</label>
-            <input type="url" id="videoUrl" required placeholder="https://..." class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent">
+            <label class="block text-sm font-medium text-gray-400 mb-1">Video URL (MP4 / Stream)</label>
+            <input type="url" id="videoUrl" placeholder="https://... (Optional for Series)" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">TMDB ID (Optional / Auto-filled)</label>
+            <input type="number" id="manualTmdbId" placeholder="e.g. 1399 (Enables embed server player)" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Seasons Count (For Series)</label>
+            <input type="number" id="manualSeasonsCount" placeholder="1" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent">
           </div>
         </div>
 
@@ -301,6 +312,16 @@
           <div>
             <label class="block text-sm font-medium text-gray-400 mb-1">Video URL (MP4)</label>
             <input type="url" id="editVideoUrl" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">TMDB ID</label>
+            <input type="number" id="editTmdbId" placeholder="e.g. 1399" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Seasons Count</label>
+            <input type="number" id="editSeasonsCount" placeholder="1" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent">
           </div>
         </div>
         <div class="flex justify-end gap-2 mt-4">
@@ -532,6 +553,7 @@
 
     async function importSingle(movieObj) {
       try {
+        movieObj.createdAt = movieObj.createdAt || Date.now();
         if (movieObj.tmdbId) {
           const endpoint = movieObj.type === 'series' ? 'tv' : 'movie';
           const res = await fetch(`https://api.themoviedb.org/3/${endpoint}/${movieObj.tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=credits,images`);
@@ -620,6 +642,12 @@
             const details = await detailsRes.json();
 
             document.getElementById('title').value = details.title || details.name || titleVal;
+            if (document.getElementById('manualTmdbId')) {
+              document.getElementById('manualTmdbId').value = tmdbId;
+            }
+            if (document.getElementById('manualSeasonsCount')) {
+              document.getElementById('manualSeasonsCount').value = details.number_of_seasons || (details.seasons ? details.seasons.length : 1);
+            }
             if (details.genres && details.genres.length > 0) {
               document.getElementById('genre').value = details.genres.map(g => g.name).join(', ');
             }
@@ -754,7 +782,13 @@
 
     function renderMoviesTable() {
       moviesList.innerHTML = '';
-      [...movies].reverse().forEach(movie => {
+      const sorted = [...movies].reverse().sort((a, b) => {
+        const tA = typeof a.createdAt === 'number' ? a.createdAt : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+        const tB = typeof b.createdAt === 'number' ? b.createdAt : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+        if (tA && tB && tA !== tB) return tB - tA;
+        return 0;
+      });
+      sorted.forEach(movie => {
         const tr = document.createElement('tr');
         tr.className = 'border-b border-gray-700/50 hover:bg-gray-750';
         
@@ -825,6 +859,8 @@
             document.getElementById('editDirector').value = movie.director || '';
             document.getElementById('editTagline').value = movie.tagline || '';
             document.getElementById('editTopCast').value = (movie.topCast || []).join(', ');
+            if (document.getElementById('editTmdbId')) document.getElementById('editTmdbId').value = movie.tmdbId || '';
+            if (document.getElementById('editSeasonsCount')) document.getElementById('editSeasonsCount').value = movie.seasonsCount || (movie.type === 'series' ? 1 : '');
             editModal.classList.remove('hidden');
           }
         });
@@ -846,6 +882,8 @@
       const id = document.getElementById('editId').value;
       const topCastStr = document.getElementById('editTopCast').value.trim();
       const topCastArr = topCastStr ? topCastStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+      const editTmdbIdVal = Number(document.getElementById('editTmdbId').value) || null;
+      const editSeasonsCountVal = Number(document.getElementById('editSeasonsCount').value) || (editType.value === 'series' ? 1 : null);
       
       try {
         await updateDoc(doc(db, 'movies', id), {
@@ -856,6 +894,8 @@
           description: document.getElementById('editDescription').value,
           posterUrl: document.getElementById('editPosterUrl').value,
           videoUrl: document.getElementById('editVideoUrl').value,
+          tmdbId: editTmdbIdVal,
+          seasonsCount: editSeasonsCountVal,
           releaseDate: document.getElementById('editReleaseDate').value || null,
           runtime: Number(document.getElementById('editRuntime').value) || null,
           voteAverage: Number(document.getElementById('editVoteAverage').value) || null,
@@ -892,6 +932,8 @@
       const voteAverage = Number(document.getElementById('voteAverage').value) || null;
       const director = document.getElementById('director').value || null;
       const tagline = document.getElementById('tagline').value || null;
+      const manualTmdbId = Number(document.getElementById('manualTmdbId').value) || null;
+      const manualSeasonsCount = Number(document.getElementById('manualSeasonsCount').value) || (typeVal === 'series' ? 1 : null);
 
       try {
         let posterUrl = '';
@@ -931,12 +973,15 @@
           genre,
           description,
           posterUrl,
-          videoUrl,
+          videoUrl: videoUrl || 'https://www.w3schools.com/html/mov_bbb.mp4',
+          tmdbId: manualTmdbId,
+          seasonsCount: manualSeasonsCount,
           releaseDate,
           runtime,
           voteAverage,
           director,
-          tagline
+          tagline,
+          createdAt: Date.now()
         });
 
         form.reset();

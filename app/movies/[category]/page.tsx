@@ -6,7 +6,7 @@ import MovieCard from '@/components/MovieCard';
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Movie, enrichMovieWithTmdb } from '@/lib/movies';
+import { Movie, isSeriesItem, sortNewestFirst } from '@/lib/movies';
 
 const CATEGORY_NAMES: Record<string, string> = {
   'hindi': 'Hindi Movies',
@@ -32,8 +32,7 @@ export default function MovieCategoryPage({ params }: { params: Promise<{ catego
       })) as Movie[];
 
       const filtered = rawMovies.filter(m => {
-        const isMovie = m.type === 'movie' || (m.type !== 'series' && m.type !== 'tv' && !(m.category || '').toLowerCase().includes('series'));
-        if (!isMovie) return false;
+        if (isSeriesItem(m)) return false;
 
         const cat = (m.category || '').toLowerCase().replace(/-/g, ' ');
         const genre = (m.genre || '').toLowerCase().replace(/-/g, ' ');
@@ -43,8 +42,8 @@ export default function MovieCategoryPage({ params }: { params: Promise<{ catego
         return cat.includes(target) || genre.includes(target) || title.includes(target);
       });
 
-      const reversed = filtered.reverse();
-      setMovies(reversed);
+      const sorted = sortNewestFirst(filtered);
+      setMovies(sorted);
       setLoading(false);
     });
 

@@ -7,7 +7,7 @@ import MovieCard from '@/components/MovieCard';
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Movie, enrichMovieWithTmdb } from '@/lib/movies';
+import { Movie, sortNewestFirst } from '@/lib/movies';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -33,8 +33,8 @@ function SearchContent() {
         return titleMatch || genreMatch || catMatch || directorMatch;
       });
 
-      const reversed = filtered.reverse();
-      setMovies(reversed);
+      const sorted = sortNewestFirst(filtered);
+      setMovies(sorted);
       setLoading(false);
     });
 

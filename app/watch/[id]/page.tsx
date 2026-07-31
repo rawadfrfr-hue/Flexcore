@@ -10,7 +10,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, getDocs, query, limit } from 'firebase/firestore';
 import { Movie, enrichMovieWithTmdb, formatRuntime } from '@/lib/movies';
 
-type ServerSource = 'vidsrc_to' | 'autoembed' | 'vidlink' | 'twoembed' | 'smashystream' | 'vidsrc_icu' | 'vidsrc_cc' | 'direct';
+type ServerSource = 'vidsrc' | 'autoembed' | 'vidlink' | 'twoembed' | 'smashystream' | 'vidsrc_icu' | 'direct';
 
 export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -19,8 +19,9 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   const [loading, setLoading] = useState(true);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
 
-  // VidSrc Streaming States
-  const [selectedServer, setSelectedServer] = useState<ServerSource>('vidsrc_to');
+  // VidSrc & Multi-Provider Streaming States
+  const [selectedServer, setSelectedServer] = useState<ServerSource>('vidsrc');
+  const [selectedSubServer, setSelectedSubServer] = useState<number>(1);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
   const [showDownloadModal, setShowDownloadModal] = useState<boolean>(false);
@@ -112,66 +113,120 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   const isSeries = movie.type === 'series' || movie.type === 'tv' || (movie.type !== 'movie' && (movie.category?.toLowerCase().includes('series') || movie.category?.toLowerCase() === 'k-drama' || movie.category?.toLowerCase() === 'anime'));
   const tmdbId = movie.tmdbId;
 
-  // Build Multi-Provider Embed URL
-  let embedUrl: string | null = null;
-  if (tmdbId && selectedServer !== 'direct') {
-    if (isSeries) {
-      switch (selectedServer) {
-        case 'vidsrc_to':
-          embedUrl = `https://vidsrc.to/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
-          break;
+  // Build Multi-Provider & Sub-Server Embed URL
+  function getEmbedUrl(
+    provider: ServerSource,
+    subServer: number,
+    idVal: string | number,
+    seriesFlag: boolean,
+    season: number,
+    episode: number
+  ): string {
+    if (seriesFlag) {
+      switch (provider) {
+        case 'vidsrc':
+          if (subServer === 2) return `https://vidsrc.me/embed/tv?tmdb=${idVal}&season=${season}&episode=${episode}`;
+          if (subServer === 3) return `https://vidsrc.cc/v2/embed/tv/${idVal}/${season}/${episode}`;
+          if (subServer === 4) return `https://vidsrc.pro/embed/tv/${idVal}/${season}/${episode}`;
+          if (subServer === 5) return `https://vidsrc.xyz/embed/tv/${idVal}/${season}/${episode}`;
+          return `https://vidsrc.to/embed/tv/${idVal}/${season}/${episode}`;
         case 'autoembed':
-          embedUrl = `https://embed.su/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
-          break;
+          if (subServer === 2) return `https://player.autoembed.cc/embed/tv/${idVal}/${season}/${episode}`;
+          return `https://embed.su/embed/tv/${idVal}/${season}/${episode}`;
         case 'vidlink':
-          embedUrl = `https://vidlink.pro/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
-          break;
+          if (subServer === 2) return `https://vidlink.pro/tv/${idVal}/${season}/${episode}?primaryColor=e11d48`;
+          return `https://vidlink.pro/tv/${idVal}/${season}/${episode}`;
         case 'twoembed':
-          embedUrl = `https://www.2embed.cc/embedtv/${tmdbId}&s=${selectedSeason}&e=${selectedEpisode}`;
-          break;
+          if (subServer === 2) return `https://www.2embed.skin/embedtv/${idVal}&s=${season}&e=${episode}`;
+          return `https://www.2embed.cc/embedtv/${idVal}&s=${season}&e=${episode}`;
         case 'smashystream':
-          embedUrl = `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}&s=${selectedSeason}&e=${selectedEpisode}`;
-          break;
+          if (subServer === 2) return `https://smashystream.com/playere.php?tmdb=${idVal}&s=${season}&e=${episode}`;
+          return `https://embed.smashystream.com/playere.php?tmdb=${idVal}&s=${season}&e=${episode}`;
         case 'vidsrc_icu':
-          embedUrl = `https://vidsrc.icu/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
-          break;
-        case 'vidsrc_cc':
-          embedUrl = `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
-          break;
+          if (subServer === 2) return `https://vidsrc.net/embed/tv/${idVal}/${season}/${episode}`;
+          return `https://vidsrc.icu/embed/tv/${idVal}/${season}/${episode}`;
         default:
-          embedUrl = `https://vidsrc.to/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
+          return `https://vidsrc.to/embed/tv/${idVal}/${season}/${episode}`;
       }
     } else {
-      switch (selectedServer) {
-        case 'vidsrc_to':
-          embedUrl = `https://vidsrc.to/embed/movie/${tmdbId}`;
-          break;
+      switch (provider) {
+        case 'vidsrc':
+          if (subServer === 2) return `https://vidsrc.me/embed/movie?tmdb=${idVal}`;
+          if (subServer === 3) return `https://vidsrc.cc/v2/embed/movie/${idVal}`;
+          if (subServer === 4) return `https://vidsrc.pro/embed/movie/${idVal}`;
+          if (subServer === 5) return `https://vidsrc.xyz/embed/movie/${idVal}`;
+          return `https://vidsrc.to/embed/movie/${idVal}`;
         case 'autoembed':
-          embedUrl = `https://embed.su/embed/movie/${tmdbId}`;
-          break;
+          if (subServer === 2) return `https://player.autoembed.cc/embed/movie/${idVal}`;
+          return `https://embed.su/embed/movie/${idVal}`;
         case 'vidlink':
-          embedUrl = `https://vidlink.pro/movie/${tmdbId}`;
-          break;
+          if (subServer === 2) return `https://vidlink.pro/movie/${idVal}?primaryColor=e11d48`;
+          return `https://vidlink.pro/movie/${idVal}`;
         case 'twoembed':
-          embedUrl = `https://www.2embed.cc/embed/movie/${tmdbId}`;
-          break;
+          if (subServer === 2) return `https://www.2embed.skin/embed/${idVal}`;
+          return `https://www.2embed.cc/embed/${idVal}`;
         case 'smashystream':
-          embedUrl = `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}`;
-          break;
+          if (subServer === 2) return `https://smashystream.com/playere.php?tmdb=${idVal}`;
+          return `https://embed.smashystream.com/playere.php?tmdb=${idVal}`;
         case 'vidsrc_icu':
-          embedUrl = `https://vidsrc.icu/embed/movie/${tmdbId}`;
-          break;
-        case 'vidsrc_cc':
-          embedUrl = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
-          break;
+          if (subServer === 2) return `https://vidsrc.net/embed/movie/${idVal}`;
+          return `https://vidsrc.icu/embed/movie/${idVal}`;
         default:
-          embedUrl = `https://vidsrc.to/embed/movie/${tmdbId}`;
+          return `https://vidsrc.to/embed/movie/${idVal}`;
       }
     }
   }
 
+  let embedUrl: string | null = null;
+  if (tmdbId && selectedServer !== 'direct') {
+    embedUrl = getEmbedUrl(selectedServer, selectedSubServer, tmdbId, isSeries, selectedSeason, selectedEpisode);
+  }
+
   const seasonsList = Array.from({ length: movie.seasonsCount || 5 }, (_, i) => i + 1);
   const episodesList = Array.from({ length: 24 }, (_, i) => i + 1);
+
+  // Define sub-servers available per provider
+  const getSubServersList = (p: ServerSource) => {
+    switch (p) {
+      case 'vidsrc':
+        return [
+          { id: 1, name: 'Server 1 (VidSrc.to)' },
+          { id: 2, name: 'Server 2 (VidSrc.me)' },
+          { id: 3, name: 'Server 3 (VidSrc.cc)' },
+          { id: 4, name: 'Server 4 (VidSrc.pro)' },
+          { id: 5, name: 'Server 5 (VidSrc.xyz)' },
+        ];
+      case 'autoembed':
+        return [
+          { id: 1, name: 'Server 1 (Embed.su)' },
+          { id: 2, name: 'Server 2 (AutoEmbed.cc)' },
+        ];
+      case 'vidlink':
+        return [
+          { id: 1, name: 'Server 1 (VidLink Pro)' },
+          { id: 2, name: 'Server 2 (VidLink Mirror)' },
+        ];
+      case 'twoembed':
+        return [
+          { id: 1, name: 'Server 1 (2Embed.cc)' },
+          { id: 2, name: 'Server 2 (2Embed.skin)' },
+        ];
+      case 'smashystream':
+        return [
+          { id: 1, name: 'Server 1 (Smashy Primary)' },
+          { id: 2, name: 'Server 2 (Smashy Mirror)' },
+        ];
+      case 'vidsrc_icu':
+        return [
+          { id: 1, name: 'Server 1 (VidSrc ICU)' },
+          { id: 2, name: 'Server 2 (VidSrc Net)' },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const subServers = getSubServersList(selectedServer);
 
   return (
     <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans select-none">
@@ -193,36 +248,39 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
           </span>
         </div>
 
+
+
         {/* Multi-Provider Streaming Server Selector */}
-        <div className="bg-[#0f0f14] p-4 rounded-2xl border border-white/10 space-y-3">
+        <div className="bg-[#0f0f14] p-4.5 rounded-2xl border border-white/10 space-y-4 shadow-xl">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 text-xs font-extrabold text-gray-200">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Streaming Provider:</span>
-              <span className="text-[10px] text-gray-400 font-normal hidden sm:inline">(If one server is slow or unavailable, click another)</span>
+              <span>1. Choose Streaming Provider:</span>
+              <span className="text-[10px] text-gray-400 font-normal hidden sm:inline">(Select a provider first, then choose a server mirror below)</span>
             </div>
             <span className="text-[10px] bg-accent/20 text-accent font-bold px-2.5 py-0.5 rounded-full border border-accent/30">
               Auto-Multi Provider
             </span>
           </div>
 
+          {/* Provider Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10">
             {tmdbId && (
               <>
                 <button
-                  onClick={() => setSelectedServer('vidsrc_to')}
+                  onClick={() => { setSelectedServer('vidsrc'); setSelectedSubServer(1); }}
                   className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
-                    selectedServer === 'vidsrc_to'
+                    selectedServer === 'vidsrc'
                       ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
                       : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                   }`}
                 >
-                  <span>⚡ VidSrc Primary</span>
+                  <span>⚡ VidSrc (5 Servers)</span>
                   <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono">1080p</span>
                 </button>
 
                 <button
-                  onClick={() => setSelectedServer('autoembed')}
+                  onClick={() => { setSelectedServer('autoembed'); setSelectedSubServer(1); }}
                   className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
                     selectedServer === 'autoembed'
                       ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
@@ -234,7 +292,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                 </button>
 
                 <button
-                  onClick={() => setSelectedServer('vidlink')}
+                  onClick={() => { setSelectedServer('vidlink'); setSelectedSubServer(1); }}
                   className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
                     selectedServer === 'vidlink'
                       ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
@@ -246,7 +304,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                 </button>
 
                 <button
-                  onClick={() => setSelectedServer('twoembed')}
+                  onClick={() => { setSelectedServer('twoembed'); setSelectedSubServer(1); }}
                   className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
                     selectedServer === 'twoembed'
                       ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
@@ -258,7 +316,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                 </button>
 
                 <button
-                  onClick={() => setSelectedServer('smashystream')}
+                  onClick={() => { setSelectedServer('smashystream'); setSelectedSubServer(1); }}
                   className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
                     selectedServer === 'smashystream'
                       ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
@@ -270,7 +328,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                 </button>
 
                 <button
-                  onClick={() => setSelectedServer('vidsrc_icu')}
+                  onClick={() => { setSelectedServer('vidsrc_icu'); setSelectedSubServer(1); }}
                   className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
                     selectedServer === 'vidsrc_icu'
                       ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
@@ -295,6 +353,30 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
               <span className="text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded font-mono">Upload</span>
             </button>
           </div>
+
+          {/* Sub-Server / Mirror Selector */}
+          {selectedServer !== 'direct' && subServers.length > 0 && (
+            <div className="pt-3 border-t border-white/10 space-y-2">
+              <div className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
+                <span>2. Select Server Mirror for <strong className="text-accent uppercase">{selectedServer}</strong>:</span>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {subServers.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => setSelectedSubServer(s.id)}
+                    className={`shrink-0 text-xs px-3 py-1.5 rounded-lg font-bold transition-all click-effect touch-manipulation border ${
+                      selectedSubServer === s.id
+                        ? 'bg-white text-black border-white shadow-md font-extrabold'
+                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Series Season & Episode Controls */}

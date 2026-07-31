@@ -6,7 +6,7 @@ import MovieCard from '@/components/MovieCard';
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Movie, enrichMovieWithTmdb } from '@/lib/movies';
+import { Movie, isSeriesItem, sortNewestFirst } from '@/lib/movies';
 
 const SERIES_CATEGORY_NAMES: Record<string, string> = {
   'bangla': 'Bangla Web Series',
@@ -33,8 +33,7 @@ export default function SeriesCategoryPage({ params }: { params: Promise<{ categ
       })) as Movie[];
 
       const filtered = rawMovies.filter(m => {
-        const isSeries = m.type === 'series' || m.type === 'tv' || (m.type !== 'movie' && ((m.category || '').toLowerCase().includes('series') || (m.category || '').toLowerCase() === 'k-drama' || (m.category || '').toLowerCase() === 'anime'));
-        if (!isSeries) return false;
+        if (!isSeriesItem(m)) return false;
 
         const cat = (m.category || '').toLowerCase().replace(/-/g, ' ');
         const genre = (m.genre || '').toLowerCase().replace(/-/g, ' ');
@@ -44,8 +43,8 @@ export default function SeriesCategoryPage({ params }: { params: Promise<{ categ
         return cat.includes(target) || genre.includes(target) || title.includes(target);
       });
 
-      const reversed = filtered.reverse();
-      setSeries(reversed);
+      const sorted = sortNewestFirst(filtered);
+      setSeries(sorted);
       setLoading(false);
     });
 

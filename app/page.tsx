@@ -8,7 +8,7 @@ import MovieCard from '@/components/MovieCard';
 import { SkeletonHero, SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Movie, enrichMovieWithTmdb } from '@/lib/movies';
+import { Movie, enrichMovieWithTmdb, isSeriesItem, sortNewestFirst } from '@/lib/movies';
 
 export default function Home() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -22,13 +22,13 @@ export default function Home() {
         ...doc.data()
       })) as Movie[];
 
-      const reversed = rawMovies.reverse();
-      setMovies(reversed);
+      const sorted = sortNewestFirst(rawMovies);
+      setMovies(sorted);
       setLoading(false);
 
       // Only enrich the hero movie in background for banner backdrop if missing
-      if (reversed.length > 0 && (!reversed[0].backdrops || reversed[0].backdrops.length === 0)) {
-        enrichMovieWithTmdb(reversed[0]).then(enrichedHero => {
+      if (sorted.length > 0 && (!sorted[0].backdrops || sorted[0].backdrops.length === 0)) {
+        enrichMovieWithTmdb(sorted[0]).then(enrichedHero => {
           setMovies(prev => prev.map(m => m.id === enrichedHero.id ? enrichedHero : m));
         });
       }
@@ -39,10 +39,8 @@ export default function Home() {
 
   const heroMovie = movies.length > 0 ? movies[0] : null;
 
-  const isItemSeries = (m: Movie) => m.type === 'series' || m.type === 'tv' || (m.type !== 'movie' && ((m.category || '').toLowerCase().includes('series') || (m.category || '').toLowerCase() === 'k-drama' || (m.category || '').toLowerCase() === 'anime'));
-
-  const moviesList = movies.filter(m => !isItemSeries(m));
-  const seriesList = movies.filter(m => isItemSeries(m));
+  const moviesList = movies.filter(m => !isSeriesItem(m));
+  const seriesList = movies.filter(m => isSeriesItem(m));
 
   return (
     <div className="relative min-h-screen flex flex-col font-sans bg-[#08080a] text-white">

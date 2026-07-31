@@ -6,7 +6,7 @@ import MovieCard from '@/components/MovieCard';
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Movie, enrichMovieWithTmdb } from '@/lib/movies';
+import { Movie, isSeriesItem, sortNewestFirst } from '@/lib/movies';
 
 export default function MoviesPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -20,18 +20,11 @@ export default function MoviesPage() {
         ...doc.data()
       })) as Movie[];
 
-      // Filter only movies (type === 'movie' or not series)
-      const movieOnly = rawMovies.filter(m => {
-        if (m.type === 'movie') return true;
-        if (!m.type) {
-          const g = (m.genre || '').toLowerCase();
-          return !g.includes('series') && !g.includes('anime') && !g.includes('drama');
-        }
-        return false;
-      });
+      // Filter only movies
+      const movieOnly = rawMovies.filter(m => !isSeriesItem(m));
 
-      const reversed = movieOnly.reverse();
-      setMovies(reversed);
+      const sorted = sortNewestFirst(movieOnly);
+      setMovies(sorted);
       setLoading(false);
     });
 

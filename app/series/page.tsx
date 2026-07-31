@@ -6,7 +6,7 @@ import MovieCard from '@/components/MovieCard';
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Movie, enrichMovieWithTmdb } from '@/lib/movies';
+import { Movie, isSeriesItem, sortNewestFirst } from '@/lib/movies';
 
 export default function SeriesPage() {
   const [series, setSeries] = useState<Movie[]>([]);
@@ -21,14 +21,10 @@ export default function SeriesPage() {
       })) as Movie[];
 
       // Filter only web series
-      const seriesOnly = rawMovies.filter(m => {
-        if (m.type === 'series') return true;
-        const g = (m.genre || '').toLowerCase();
-        return g.includes('series') || g.includes('anime') || g.includes('drama') || g.includes('show');
-      });
+      const seriesOnly = rawMovies.filter(m => isSeriesItem(m));
 
-      const reversed = seriesOnly.reverse();
-      setSeries(reversed);
+      const sorted = sortNewestFirst(seriesOnly);
+      setSeries(sorted);
       setLoading(false);
     });
 
