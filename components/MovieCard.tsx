@@ -16,6 +16,7 @@ export default memo(function MovieCard({ movie }: { movie: Movie }) {
           src={movie.posterUrl} 
           alt={movie.title}
           fill
+          loading="lazy"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
           className="object-cover transition-transform duration-300 brightness-90 group-hover:brightness-100 group-hover:scale-105"
           referrerPolicy="no-referrer"
@@ -23,14 +24,14 @@ export default memo(function MovieCard({ movie }: { movie: Movie }) {
         
         {/* Top rating badge */}
         {movie.voteAverage && (
-          <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md text-yellow-400 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-500/30 shadow">
+          <div className="absolute top-2 right-2 bg-black/90 text-yellow-400 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-500/30 shadow">
             ★ {movie.voteAverage.toFixed(1)}
           </div>
         )}
 
         {/* Release year badge */}
         {movie.releaseDate && (
-          <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-md text-white/90 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-white/20">
+          <div className="absolute top-2 left-2 bg-black/90 text-white/90 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-white/20">
             {movie.releaseDate.substring(0, 4)}
           </div>
         )}

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import MovieCard from '@/components/MovieCard';
+import dynamic from 'next/dynamic';
+const InfiniteMovieGrid = dynamic(() => import('@/components/InfiniteMovieGrid'), { ssr: false });
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
@@ -24,7 +25,15 @@ function SearchContent() {
   // Debounce user input (300ms delay for better performance)
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedQuery(inputVal.trim());
+      const trimmed = inputVal.trim();
+      setDebouncedQuery(trimmed);
+      
+      // Silently update URL without triggering heavy Next.js re-renders
+      if (trimmed) {
+        window.history.replaceState(null, '', `/search?q=${encodeURIComponent(trimmed)}`);
+      } else {
+        window.history.replaceState(null, '', '/search');
+      }
     }, 300);
 
     return () => clearTimeout(timer);
@@ -145,11 +154,7 @@ function SearchContent() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-            {searchResults.map(item => (
-              <MovieCard key={item.id} movie={item} />
-            ))}
-          </div>
+          <InfiniteMovieGrid movies={searchResults} />
         )}
       </div>
     </main>

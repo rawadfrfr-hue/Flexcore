@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import MovieCard from '@/components/MovieCard';
+import dynamic from 'next/dynamic';
+const InfiniteMovieGrid = dynamic(() => import('@/components/InfiniteMovieGrid'), { ssr: false });
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
@@ -58,11 +59,7 @@ export default function MoviesPage() {
             No movies found.
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-            {movies.map(movie => (
-              <MovieCard key={movie.id} movie={movie} />
-            ))}
-          </div>
+          <InfiniteMovieGrid movies={movies} />
         )}
       </main>
     </div>

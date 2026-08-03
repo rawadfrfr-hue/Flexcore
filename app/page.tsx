@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import MovieCard from '@/components/MovieCard';
+import dynamic from 'next/dynamic';
+const MovieCard = dynamic(() => import('@/components/MovieCard'), { ssr: false });
 import { SkeletonHero, SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
@@ -79,7 +80,7 @@ export default function Home() {
                   FEATURED {heroMovie.type === 'series' ? 'SERIES' : 'MOVIE'}
                 </span>
                 {heroMovie.voteAverage && (
-                  <span className="bg-black/80 backdrop-blur-md text-yellow-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-yellow-500/30">
+                  <span className="bg-black/90 text-yellow-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-yellow-500/30 shadow-sm">
                     ★ {heroMovie.voteAverage.toFixed(1)}
                   </span>
                 )}
