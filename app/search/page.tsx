@@ -21,28 +21,20 @@ function SearchContent() {
   
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [prevInitialQ, setPrevInitialQ] = useState(initialQ);
-
-  // Sync search input if URL changes
-  if (initialQ !== prevInitialQ) {
-    setPrevInitialQ(initialQ);
-    setInputVal(initialQ);
-    setDebouncedQuery(initialQ);
-  }
-
-  // Debounce user input (150ms delay for fast instant updates)
+  // Debounce user input (300ms delay for better performance)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(inputVal.trim());
+      // Silently update URL without triggering heavy Next.js re-renders
       if (inputVal.trim()) {
-        router.replace(`/search?q=${encodeURIComponent(inputVal.trim())}`, { scroll: false });
+        window.history.replaceState(null, '', `/search?q=${encodeURIComponent(inputVal.trim())}`);
       } else {
-        router.replace('/search', { scroll: false });
+        window.history.replaceState(null, '', '/search');
       }
-    }, 150);
+    }, 300);
 
     return () => clearTimeout(timer);
-  }, [inputVal, router]);
+  }, [inputVal]);
 
   // Fetch Firestore movies snapshot
   useEffect(() => {
@@ -84,7 +76,7 @@ function SearchContent() {
     <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-6">
       
       {/* Sticky Top Search Header Box */}
-      <div className="sticky top-16 sm:top-20 z-30 bg-[#0d0d12]/95 border border-white/10 rounded-2xl md:rounded-3xl p-3.5 md:p-5 shadow-2xl backdrop-blur-2xl transition-all">
+      <div className="sticky top-16 sm:top-20 z-30 bg-[#0d0d12]/95 border border-white/10 rounded-2xl md:rounded-3xl p-3.5 md:p-5 shadow-xl backdrop-blur-md transition-all will-change-transform">
         <div className="flex items-center justify-between gap-3 mb-2.5">
           <div className="flex items-center gap-2">
             <span className="text-xl md:text-2xl">🔍</span>

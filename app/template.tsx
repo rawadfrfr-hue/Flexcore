@@ -13,7 +13,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 40 }}
-      className="flex-1 flex flex-col w-full h-full will-change-[opacity,transform]"
+      className="flex-1 flex flex-col w-full h-full"
     >
       {children}
     </motion.div>
