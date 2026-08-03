@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, getDocs, query, limit } from 'firebase/firestore';
 import { Movie, enrichMovieWithTmdb, formatRuntime } from '@/lib/movies';
 
-type ServerSource = 'vidsrc' | 'autoembed' | 'vidlink' | 'twoembed' | 'smashystream' | 'vidsrc_icu' | 'direct';
+type ServerSource = 'vidsrc' | 'autoembed' | 'vidlink' | 'twoembed' | 'smashystream' | 'vidsrc_icu' | 'videasy' | 'direct';
 
 export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -142,6 +142,8 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
         case 'vidsrc_icu':
           if (subServer === 2) return `https://vidsrc.net/embed/tv/${idVal}/${season}/${episode}`;
           return `https://vidsrc.icu/embed/tv/${idVal}/${season}/${episode}`;
+        case 'videasy':
+          return `https://player.videasy.net/tv/${idVal}/${season}/${episode}`;
         default:
           return `https://vidsrc.to/embed/tv/${idVal}/${season}/${episode}`;
       }
@@ -168,6 +170,8 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
         case 'vidsrc_icu':
           if (subServer === 2) return `https://vidsrc.net/embed/movie/${idVal}`;
           return `https://vidsrc.icu/embed/movie/${idVal}`;
+        case 'videasy':
+          return `https://player.videasy.net/movie/${idVal}`;
         default:
           return `https://vidsrc.to/embed/movie/${idVal}`;
       }
@@ -217,6 +221,10 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
         return [
           { id: 1, name: 'Server 1 (VidSrc ICU)' },
           { id: 2, name: 'Server 2 (VidSrc Net)' },
+        ];
+      case 'videasy':
+        return [
+          { id: 1, name: 'Server 1 (Videasy)' },
         ];
       default:
         return [];
@@ -333,6 +341,18 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                 >
                   <span>🍿 VidSrc ICU</span>
                   <span className="text-[9px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded font-mono">Sub/Dub</span>
+                </button>
+
+                <button
+                  onClick={() => { setSelectedServer('videasy'); setSelectedSubServer(1); }}
+                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                    selectedServer === 'videasy'
+                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  <span>📺 Videasy</span>
+                  <span className="text-[9px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded font-mono">Fast</span>
                 </button>
               </>
             )}
