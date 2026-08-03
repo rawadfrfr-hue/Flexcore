@@ -3,7 +3,6 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import Navbar from '@/components/Navbar';
 import MovieCard from '@/components/MovieCard';
 import { SkeletonWatch } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
@@ -89,7 +88,6 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans">
-        <Navbar />
         <SkeletonWatch />
       </div>
     );
@@ -98,7 +96,6 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   if (!movie) {
     return (
       <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans">
-        <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
           <h1 className="text-2xl font-bold text-red-500 mb-2">Movie Not Found</h1>
           <p className="text-gray-400 text-sm mb-6">The requested movie or series could not be located in our library.</p>
@@ -230,7 +227,6 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans select-none">
-      <Navbar />
 
       {/* Main Full-Screen Watch Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">

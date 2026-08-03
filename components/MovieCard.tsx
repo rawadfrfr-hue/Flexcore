@@ -10,13 +10,13 @@ export default function MovieCard({ movie }: { movie: Movie }) {
       href={`/watch/${movie.id}`} 
       className="group flex flex-col click-effect touch-manipulation select-none"
     >
-      <div className="w-full aspect-[2/3] bg-[#1a1a20] rounded-xl relative overflow-hidden border border-white/10 shadow-lg group-hover:border-accent/60 group-active:border-accent transition-all duration-200">
+      <div className="w-full aspect-[2/3] bg-[#1a1a20] rounded-xl relative overflow-hidden border border-white/10 shadow-lg group-hover:border-accent/60 group-active:border-accent transition-colors duration-200 will-change-[border-color]">
         <Image 
           src={movie.posterUrl} 
           alt={movie.title}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
-          className="object-cover group-hover:scale-105 transition-all duration-300 brightness-90 group-hover:brightness-100"
+          className="object-cover transition-transform duration-300 brightness-90 group-hover:brightness-100 group-hover:scale-105 will-change-transform"
           referrerPolicy="no-referrer"
         />
         

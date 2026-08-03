@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import Navbar from '@/components/Navbar';
 import MovieCard from '@/components/MovieCard';
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
@@ -53,7 +52,6 @@ export default function SeriesCategoryPage({ params }: { params: Promise<{ categ
 
   return (
     <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans">
-      <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <div className="flex items-center justify-between pb-4 border-b border-white/10">

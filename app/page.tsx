@@ -3,16 +3,15 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import Navbar from '@/components/Navbar';
 import MovieCard from '@/components/MovieCard';
 import { SkeletonHero, SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Movie, enrichMovieWithTmdb, isSeriesItem, sortNewestFirst } from '@/lib/movies';
+import { Movie, enrichMovieWithTmdb, isSeriesItem, sortNewestFirst, getMoviesCache, setMoviesCache } from '@/lib/movies';
 
 export default function Home() {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [movies, setMovies] = useState<Movie[]>(getMoviesCache() || []);
+  const [loading, setLoading] = useState(getMoviesCache() === null);
 
   useEffect(() => {
     const q = query(collection(db, 'movies'));
@@ -24,6 +23,7 @@ export default function Home() {
 
       const sorted = sortNewestFirst(rawMovies);
       setMovies(sorted);
+      setMoviesCache(sorted);
       setLoading(false);
 
       // Only enrich the hero movie in background for banner backdrop if missing
@@ -48,7 +48,6 @@ export default function Home() {
       <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(circle,rgba(229,9,20,0.15)_0%,transparent_70%)] z-0 pointer-events-none"></div>
 
       {/* Shared Navbar */}
-      <Navbar />
 
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10">
         

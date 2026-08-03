@@ -25,6 +25,15 @@ export interface Movie {
   createdAt?: number | string;
 }
 
+// Global cache to prevent Skeleton flashes and lags during page transitions
+let globalMoviesCache: Movie[] | null = null;
+export function getMoviesCache(): Movie[] | null {
+  return globalMoviesCache;
+}
+export function setMoviesCache(movies: Movie[]) {
+  globalMoviesCache = movies;
+}
+
 export function isSeriesItem(m: Movie): boolean {
   if (m.type === 'series' || m.type === 'tv') return true;
   const cat = (m.category || '').toLowerCase();

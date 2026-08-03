@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { Movie } from '@/lib/movies';
@@ -27,19 +27,7 @@ export const SERIES_CATEGORIES = [
 
 export default function Navbar() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [searchVal, setSearchVal] = useState('');
-  const router = useRouter();
   const pathname = usePathname();
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchVal.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchVal.trim())}`);
-      setIsDrawerOpen(false);
-    } else {
-      router.push('/search');
-    }
-  };
 
   return (
     <>
@@ -250,34 +238,18 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Icon (All screens) */}
         <div className="flex items-center gap-2">
-          {/* Desktop Search Bar */}
-          <div className="relative hidden sm:block w-48 md:w-72">
-            <form onSubmit={handleSearchSubmit}>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search movies, series..."
-                  value={searchVal}
-                  onChange={(e) => setSearchVal(e.target.value)}
-                  className="w-full bg-white/5 border border-white/15 rounded-full py-1.5 pl-9 pr-8 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-accent focus:bg-black/80 transition-all touch-manipulation"
-                />
-                <svg className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                {searchVal && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchVal('')}
-                    className="absolute right-3 top-2 text-gray-400 hover:text-white text-xs"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
+          <Link
+            href="/search"
+            className="p-2.5 sm:p-3 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/20 text-white border border-white/10 transition-all click-effect touch-manipulation cursor-pointer shadow-sm hover:shadow-accent/20 hover:border-accent/50"
+            aria-label="Search"
+          >
+            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </Link>
         </div>
       </header>
     </>

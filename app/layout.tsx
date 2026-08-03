@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import Navbar from '@/components/Navbar';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark scroll-smooth">
-      <body suppressHydrationWarning className="bg-[#08080a] text-white antialiased touch-manipulation select-none">
+      <body suppressHydrationWarning className="bg-[#08080a] text-white antialiased touch-manipulation select-none flex flex-col min-h-screen">
+        <Navbar />
         {children}
       </body>
     </html>

@@ -1,16 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Navbar from '@/components/Navbar';
 import MovieCard from '@/components/MovieCard';
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Movie, isSeriesItem, sortNewestFirst } from '@/lib/movies';
+import { Movie, isSeriesItem, sortNewestFirst, getMoviesCache, setMoviesCache } from '@/lib/movies';
 
 export default function MoviesPage() {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getMoviesCache();
+  const initialMovies = cached ? sortNewestFirst(cached.filter(m => !isSeriesItem(m))) : [];
+  const [movies, setMovies] = useState<Movie[]>(initialMovies);
+  const [loading, setLoading] = useState(cached === null);
 
   useEffect(() => {
     const q = query(collection(db, 'movies'));
@@ -19,6 +20,7 @@ export default function MoviesPage() {
         id: doc.id,
         ...doc.data()
       })) as Movie[];
+      setMoviesCache(rawMovies);
 
       // Filter only movies
       const movieOnly = rawMovies.filter(m => !isSeriesItem(m));
@@ -33,7 +35,6 @@ export default function MoviesPage() {
 
   return (
     <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans">
-      <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <div className="flex items-center justify-between pb-4 border-b border-white/10">

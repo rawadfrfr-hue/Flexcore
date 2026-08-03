@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
 import MovieCard from '@/components/MovieCard';
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
@@ -174,7 +173,6 @@ function SearchContent() {
 export default function SearchPage() {
   return (
     <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans">
-      <Navbar />
       <Suspense fallback={<div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"><SkeletonGrid count={12} /></div>}>
         <SearchContent />
       </Suspense>
