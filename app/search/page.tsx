@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import MovieCard from '@/components/MovieCard';
 import { SkeletonGrid } from '@/components/Skeleton';
@@ -11,63 +11,162 @@ import { Movie, sortNewestFirst } from '@/lib/movies';
 
 function SearchContent() {
   const searchParams = useSearchParams();
-  const q = searchParams.get('q') || '';
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const initialQ = searchParams.get('q') || '';
 
+  const [inputVal, setInputVal] = useState(initialQ);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialQ);
+  
+  const [allMovies, setAllMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [prevInitialQ, setPrevInitialQ] = useState(initialQ);
+
+  // Sync search input if URL changes
+  if (initialQ !== prevInitialQ) {
+    setPrevInitialQ(initialQ);
+    setInputVal(initialQ);
+    setDebouncedQuery(initialQ);
+  }
+
+  // Debounce user input (150ms delay for fast instant updates)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(inputVal.trim());
+      if (inputVal.trim()) {
+        router.replace(`/search?q=${encodeURIComponent(inputVal.trim())}`, { scroll: false });
+      } else {
+        router.replace('/search', { scroll: false });
+      }
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [inputVal, router]);
+
+  // Fetch Firestore movies snapshot
   useEffect(() => {
     const firestoreQuery = query(collection(db, 'movies'));
-    const unsubscribe = onSnapshot(firestoreQuery, async (snapshot) => {
+    const unsubscribe = onSnapshot(firestoreQuery, (snapshot) => {
       const rawMovies = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Movie[];
 
-      const queryLower = q.toLowerCase();
-      const filtered = rawMovies.filter(m => {
-        if (!q) return true;
-        const titleMatch = m.title.toLowerCase().includes(queryLower);
-        const genreMatch = m.genre.toLowerCase().includes(queryLower);
-        const catMatch = (m.category || '').toLowerCase().includes(queryLower);
-        const directorMatch = (m.director || '').toLowerCase().includes(queryLower);
-        return titleMatch || genreMatch || catMatch || directorMatch;
-      });
-
-      const sorted = sortNewestFirst(filtered);
-      setMovies(sorted);
+      setAllMovies(sortNewestFirst(rawMovies));
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [q]);
+  }, []);
+
+  // Filter movies based on search query
+  const queryLower = debouncedQuery.toLowerCase();
+  
+  const searchResults = allMovies.filter(m => {
+    if (!queryLower) return true;
+
+    const titleMatch = (m.title || '').toLowerCase().includes(queryLower);
+    const genreMatch = (m.genre || '').toLowerCase().includes(queryLower);
+    const catMatch = (m.category || '').toLowerCase().includes(queryLower);
+    const directorMatch = (m.director || '').toLowerCase().includes(queryLower);
+    return titleMatch || genreMatch || catMatch || directorMatch;
+  });
+
+  const handleClear = () => {
+    setInputVal('');
+    setDebouncedQuery('');
+    router.replace('/search', { scroll: false });
+    if (inputRef.current) inputRef.current.focus();
+  };
 
   return (
-    <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <div className="flex items-center justify-between pb-4 border-b border-white/10">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2">
-            <span>🔍</span> Search Results {q ? `for "${q}"` : ''}
-          </h1>
-          <p className="text-xs text-gray-400 mt-1">Direct URL route: /search?q={q}</p>
+    <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-6">
+      
+      {/* Sticky Top Search Header Box */}
+      <div className="sticky top-16 sm:top-20 z-30 bg-[#0d0d12]/95 border border-white/10 rounded-2xl md:rounded-3xl p-3.5 md:p-5 shadow-2xl backdrop-blur-2xl transition-all">
+        <div className="flex items-center justify-between gap-3 mb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xl md:text-2xl">🔍</span>
+            <h1 className="text-lg md:text-xl font-extrabold text-white tracking-tight">
+              Search
+            </h1>
+          </div>
+          {debouncedQuery && (
+            <span className="text-xs font-bold text-accent bg-accent/15 border border-accent/30 px-3 py-1 rounded-full">
+              {searchResults.length} {searchResults.length === 1 ? 'Result' : 'Results'}
+            </span>
+          )}
         </div>
-        <span className="text-xs font-bold text-accent bg-accent/15 border border-accent/30 px-3 py-1 rounded-full">
-          {movies.length} Results
-        </span>
+
+        {/* Prominent Search Input Box */}
+        <div className="relative flex items-center">
+          <svg 
+            className="w-5 h-5 text-accent absolute left-4 pointer-events-none" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+
+          <input
+            ref={inputRef}
+            type="text"
+            autoFocus
+            placeholder="Search movies, web series, genre..."
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
+            className="w-full bg-black/70 border-2 border-white/15 focus:border-accent text-white placeholder-gray-400 font-medium text-sm md:text-base rounded-xl md:rounded-2xl py-3 pl-12 pr-12 focus:outline-none focus:ring-4 focus:ring-accent/20 transition-all shadow-inner"
+          />
+
+          {inputVal && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="absolute right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white text-xs transition-colors cursor-pointer"
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
-      {loading ? (
-        <SkeletonGrid count={12} />
-      ) : movies.length === 0 ? (
-        <div className="text-center py-16 bg-white/5 rounded-2xl border border-white/10 text-gray-400 text-sm">
-          No movies or series matching &ldquo;{q}&rdquo; found.
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-          {movies.map(item => (
-            <MovieCard key={item.id} movie={item} />
-          ))}
-        </div>
-      )}
+      {/* Main Results Grid */}
+      <div className="space-y-4 pt-1">
+        {debouncedQuery && (
+          <div className="text-sm font-semibold text-gray-300 flex items-center justify-between px-1">
+            <span>Showing results for &ldquo;<span className="text-white font-bold">{debouncedQuery}</span>&rdquo;</span>
+            <span className="text-xs text-gray-500">{searchResults.length} found</span>
+          </div>
+        )}
+
+        {loading ? (
+          <SkeletonGrid count={12} />
+        ) : searchResults.length === 0 ? (
+          <div className="text-center py-20 bg-[#0d0d12] rounded-3xl border border-white/10 p-8 space-y-3">
+            <div className="text-4xl">🎬</div>
+            <h3 className="text-lg font-bold text-white">No matches found</h3>
+            <p className="text-xs text-gray-400 max-w-md mx-auto">
+              We couldn&apos;t find any movies or web series matching &ldquo;{debouncedQuery}&rdquo;. Try searching with another keyword.
+            </p>
+            <button
+              onClick={handleClear}
+              className="mt-2 px-5 py-2 bg-accent hover:bg-accent/80 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer inline-block"
+            >
+              Clear Search
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+            {searchResults.map(item => (
+              <MovieCard key={item.id} movie={item} />
+            ))}
+          </div>
+        )}
+      </div>
     </main>
   );
 }

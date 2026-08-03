@@ -20,6 +20,8 @@ export interface Movie {
   topCast?: string[];
   backdrops?: string[];
   seasonsCount?: number;
+  year?: string | number;
+  rating?: string | number;
   createdAt?: number | string;
 }
 
@@ -35,15 +37,33 @@ export function isSeriesItem(m: Movie): boolean {
 }
 
 export function sortNewestFirst(items: Movie[]): Movie[] {
-  const reversed = [...items].reverse();
-  return reversed.sort((a, b) => {
-    const tA = typeof a.createdAt === 'number' ? a.createdAt : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
-    const tB = typeof b.createdAt === 'number' ? b.createdAt : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
-    if (tA && tB && tA !== tB) {
-      return tB - tA;
+  const itemsWithIndex = items.map((item, idx) => ({ item, idx }));
+  itemsWithIndex.sort((a, b) => {
+    const getTime = (m: Movie) => {
+      if (typeof m.createdAt === 'number') return m.createdAt;
+      if (typeof m.createdAt === 'string') {
+        const parsed = new Date(m.createdAt).getTime();
+        if (!isNaN(parsed)) return parsed;
+      }
+      if (m.createdAt && typeof (m.createdAt as any).seconds === 'number') {
+        return (m.createdAt as any).seconds * 1000;
+      }
+      if (m.releaseDate) {
+        const parsedRel = new Date(m.releaseDate).getTime();
+        if (!isNaN(parsedRel)) return parsedRel;
+      }
+      return 0;
+    };
+
+    const timeA = getTime(a.item);
+    const timeB = getTime(b.item);
+
+    if (timeA !== timeB) {
+      return timeB - timeA;
     }
-    return 0;
+    return b.idx - a.idx;
   });
+  return itemsWithIndex.map(x => x.item);
 }
 
 const TMDB_API_KEY = "40997d508f165094637f1d6f8a9ab148";

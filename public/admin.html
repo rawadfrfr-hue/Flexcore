@@ -219,22 +219,8 @@
       <div id="syncStatus" class="hidden text-sm bg-purple-900/30 text-purple-300 p-3 rounded mb-4 border border-purple-700"></div>
       <div id="loading" class="text-gray-400 text-sm">Loading library items...</div>
       <div id="noMovies" class="hidden text-gray-400 text-sm">No items found. Click "+ Add Content" to get started.</div>
-      <div class="overflow-x-auto">
-        <table id="moviesTable" class="hidden w-full text-left border-collapse">
-          <thead>
-            <tr class="border-b border-gray-700 text-gray-400 text-xs uppercase tracking-wider">
-              <th class="py-3 px-4">Poster</th>
-              <th class="py-3 px-4">Title</th>
-              <th class="py-3 px-4">Type & Category</th>
-              <th class="py-3 px-4">Genre</th>
-              <th class="py-3 px-4">TMDB Info</th>
-              <th class="py-3 px-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="moviesList">
-            <!-- Items injected here -->
-          </tbody>
-        </table>
+      <div id="moviesGrid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 mt-4">
+        <!-- Movies injected here dynamically -->
       </div>
     </div>
   </div>
@@ -745,10 +731,9 @@
     const form = document.getElementById('addMovieForm');
     const submitBtn = document.getElementById('submitBtn');
     const successMessage = document.getElementById('successMessage');
-    const moviesList = document.getElementById('moviesList');
+    const moviesGrid = document.getElementById('moviesGrid');
     const loading = document.getElementById('loading');
     const noMovies = document.getElementById('noMovies');
-    const moviesTable = document.getElementById('moviesTable');
 
     // Edit Modal Elements
     const editModal = document.getElementById('editModal');
@@ -759,7 +744,7 @@
 
     async function fetchMovies() {
       loading.style.display = 'block';
-      moviesTable.style.display = 'none';
+      moviesGrid.style.display = 'none';
       noMovies.style.display = 'none';
       
       try {
@@ -771,8 +756,8 @@
         if (movies.length === 0) {
           noMovies.style.display = 'block';
         } else {
-          moviesTable.style.display = 'table';
-          renderMoviesTable();
+          moviesGrid.style.display = 'grid';
+          renderMoviesGrid();
         }
       } catch (error) {
         console.error("Error fetching movies:", error);
@@ -780,43 +765,87 @@
       }
     }
 
-    function renderMoviesTable() {
-      moviesList.innerHTML = '';
-      const sorted = [...movies].reverse().sort((a, b) => {
-        const tA = typeof a.createdAt === 'number' ? a.createdAt : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
-        const tB = typeof b.createdAt === 'number' ? b.createdAt : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
-        if (tA && tB && tA !== tB) return tB - tA;
-        return 0;
+    function renderMoviesGrid() {
+      moviesGrid.innerHTML = '';
+      
+      // Sort newest added items first
+      const itemsWithIndex = movies.map((item, idx) => ({ item, idx }));
+      itemsWithIndex.sort((a, b) => {
+        const getTime = (m) => {
+          if (typeof m.createdAt === 'number') return m.createdAt;
+          if (typeof m.createdAt === 'string') {
+            const parsed = new Date(m.createdAt).getTime();
+            if (!isNaN(parsed)) return parsed;
+          }
+          if (m.createdAt && typeof m.createdAt.seconds === 'number') {
+            return m.createdAt.seconds * 1000;
+          }
+          if (m.releaseDate) {
+            const parsedRel = new Date(m.releaseDate).getTime();
+            if (!isNaN(parsedRel)) return parsedRel;
+          }
+          return 0;
+        };
+
+        const timeA = getTime(a.item);
+        const timeB = getTime(b.item);
+
+        if (timeA !== timeB) {
+          return timeB - timeA;
+        }
+        return b.idx - a.idx;
       });
+
+      const sorted = itemsWithIndex.map(x => x.item);
+
       sorted.forEach(movie => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-gray-700/50 hover:bg-gray-750';
+        const card = document.createElement('div');
+        card.className = 'bg-gray-900/90 border border-gray-700/80 rounded-2xl overflow-hidden flex flex-col shadow-lg hover:border-accent/60 transition-all duration-300 group';
         
         const typeBadge = (movie.type === 'series') 
-          ? `<span class="bg-purple-900/60 text-purple-300 border border-purple-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">SERIES</span>` 
-          : `<span class="bg-blue-900/60 text-blue-300 border border-blue-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">MOVIE</span>`;
+          ? `<span class="bg-purple-900/90 text-purple-200 border border-purple-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase shadow">SERIES</span>` 
+          : `<span class="bg-blue-900/90 text-blue-200 border border-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase shadow">MOVIE</span>`;
 
         const catBadge = movie.category 
-          ? `<span class="bg-accent/20 text-accent border border-accent/40 text-[10px] font-bold px-2 py-0.5 rounded uppercase">${escapeHtml(movie.category)}</span>`
-          : `<span class="text-gray-500 text-xs">-</span>`;
+          ? `<span class="bg-accent text-white border border-accent text-[10px] font-black px-2 py-0.5 rounded-full uppercase shadow">${escapeHtml(movie.category)}</span>`
+          : '';
 
         const hasTmdb = (movie.runtime || movie.voteAverage || movie.director);
         const tmdbBadge = hasTmdb 
-          ? `<span class="text-[10px] bg-green-900/50 text-green-300 px-2 py-0.5 rounded border border-green-700 font-semibold">✓ Complete</span>`
-          : `<span class="text-[10px] bg-yellow-900/50 text-yellow-300 px-2 py-0.5 rounded border border-yellow-700 font-semibold">Basic</span>`;
+          ? `<span class="text-[10px] bg-green-900/90 text-green-300 px-2 py-0.5 rounded-full border border-green-600 font-bold shadow">✓ TMDB</span>`
+          : `<span class="text-[10px] bg-yellow-900/90 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-600 font-bold shadow">Basic</span>`;
 
-        tr.innerHTML = `
-          <td class="py-2 px-4"><img src="${movie.posterUrl}" alt="poster" class="w-10 h-14 object-cover rounded shadow"></td>
-          <td class="py-2 px-4 font-bold text-sm">${escapeHtml(movie.title)}</td>
-          <td class="py-2 px-4 space-x-1">${typeBadge} ${catBadge}</td>
-          <td class="py-2 px-4 text-gray-300 text-xs">${escapeHtml(movie.genre)}</td>
-          <td class="py-2 px-4">${tmdbBadge}</td>
-          <td class="py-2 px-4 text-right whitespace-nowrap">
-            <button data-id="${movie.id}" class="edit-btn text-blue-400 hover:text-blue-300 font-medium text-xs mr-3">Edit</button>
-            <button data-id="${movie.id}" class="delete-btn text-red-400 hover:text-red-300 font-medium text-xs">Delete</button>
-          </td>
+        const posterSrc = movie.posterUrl || 'https://via.placeholder.com/300x450?text=No+Poster';
+
+        card.innerHTML = `
+          <div class="relative aspect-[2/3] w-full bg-gray-950 overflow-hidden">
+            <img src="${posterSrc}" alt="${escapeHtml(movie.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            <div class="absolute top-2 left-2 flex flex-wrap gap-1 z-10">
+              ${typeBadge}
+              ${catBadge}
+            </div>
+            <div class="absolute top-2 right-2 z-10">
+              ${tmdbBadge}
+            </div>
+          </div>
+          <div class="p-3 flex flex-col justify-between flex-1 space-y-2">
+            <div>
+              <h3 class="font-bold text-sm text-white line-clamp-1 group-hover:text-accent transition-colors" title="${escapeHtml(movie.title)}">
+                ${escapeHtml(movie.title)}
+              </h3>
+              <p class="text-xs text-gray-400 line-clamp-1 mt-0.5">${escapeHtml(movie.genre || 'No genre')}</p>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-gray-800 gap-1">
+              <button data-id="${movie.id}" class="edit-btn px-2.5 py-1 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/50 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                ✏️ Edit
+              </button>
+              <button data-id="${movie.id}" class="delete-btn px-2.5 py-1 bg-red-600/30 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/50 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
         `;
-        moviesList.appendChild(tr);
+        moviesGrid.appendChild(card);
       });
 
       // Delete buttons

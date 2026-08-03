@@ -1,8 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query } from 'firebase/firestore';
+import { Movie } from '@/lib/movies';
+import { motion, AnimatePresence } from 'motion/react';
 
 export const MOVIE_CATEGORIES = [
   { slug: 'hindi', label: 'Hindi Movies' },
@@ -32,23 +36,36 @@ export default function Navbar() {
     if (searchVal.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchVal.trim())}`);
       setIsDrawerOpen(false);
+    } else {
+      router.push('/search');
     }
   };
 
   return (
     <>
       {/* Left Navigation Drawer */}
-      {isDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex">
-          {/* Backdrop Overlay */}
-          <div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsDrawerOpen(false)}
-          ></div>
+      <AnimatePresence>
+        {isDrawerOpen && (
+          <div className="fixed inset-0 z-50 flex">
+            {/* Backdrop Overlay */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setIsDrawerOpen(false)}
+            ></motion.div>
 
-          {/* Drawer Content */}
-          <div className="relative w-80 max-w-[85vw] bg-[#0d0d12] border-r border-white/10 h-full flex flex-col z-10 p-6 overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+            {/* Drawer Content */}
+            <motion.div 
+              initial={{ x: "-100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "-100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative w-80 max-w-[85vw] bg-[#0d0d12]/95 backdrop-blur-xl border-r border-white/10 h-full flex flex-col z-10 p-6 overflow-y-auto shadow-2xl"
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
               <Link 
                 href="/" 
                 onClick={() => setIsDrawerOpen(false)}
@@ -66,22 +83,6 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Mobile Search inside Drawer */}
-            <form onSubmit={handleSearchSubmit} className="mb-6">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search title, genre, cast..."
-                  value={searchVal}
-                  onChange={(e) => setSearchVal(e.target.value)}
-                  className="w-full bg-white/5 border border-white/15 rounded-xl py-2.5 pl-9 pr-4 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-accent"
-                />
-                <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-              </div>
-            </form>
-
             <nav className="space-y-6 flex-1">
               {/* Home Link */}
               <Link
@@ -94,6 +95,19 @@ export default function Navbar() {
                 }`}
               >
                 <span>🏠</span> All Content (Home)
+              </Link>
+
+              {/* Search Link */}
+              <Link
+                href="/search"
+                onClick={() => setIsDrawerOpen(false)}
+                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${
+                  pathname === '/search'
+                    ? 'bg-accent text-white shadow'
+                    : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <span>🔍</span> Search & Explore
               </Link>
 
               {/* MOVIES Section */}
@@ -188,9 +202,10 @@ export default function Navbar() {
             <div className="pt-4 border-t border-white/10 text-[11px] text-gray-500 text-center">
               FlixCore Streaming Platform
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
+      </AnimatePresence>
 
       {/* Main Header */}
       <header className="h-[75px] md:h-[80px] sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6 md:px-10 bg-[#08080a]/90 backdrop-blur-md border-b border-white/10 select-none">
@@ -235,32 +250,34 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Search Bar & Mobile Search Button */}
+        {/* Search Bar */}
         <div className="flex items-center gap-2">
-          {/* Mobile search button */}
-          <button
-            onClick={() => setIsDrawerOpen(true)}
-            className="sm:hidden p-2.5 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/20 border border-white/10 text-gray-300 click-effect touch-manipulation"
-            aria-label="Search"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-          </button>
-
           {/* Desktop Search Bar */}
-          <form onSubmit={handleSearchSubmit} className="relative hidden sm:block w-48 md:w-72">
-            <input
-              type="text"
-              placeholder="Search movies, series..."
-              value={searchVal}
-              onChange={(e) => setSearchVal(e.target.value)}
-              className="w-full bg-white/5 border border-white/15 rounded-full py-1.5 pl-9 pr-4 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-accent focus:bg-black/60 transition-all touch-manipulation"
-            />
-            <svg className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-          </form>
+          <div className="relative hidden sm:block w-48 md:w-72">
+            <form onSubmit={handleSearchSubmit}>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search movies, series..."
+                  value={searchVal}
+                  onChange={(e) => setSearchVal(e.target.value)}
+                  className="w-full bg-white/5 border border-white/15 rounded-full py-1.5 pl-9 pr-8 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-accent focus:bg-black/80 transition-all touch-manipulation"
+                />
+                <svg className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                {searchVal && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchVal('')}
+                    className="absolute right-3 top-2 text-gray-400 hover:text-white text-xs"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
         </div>
       </header>
     </>
