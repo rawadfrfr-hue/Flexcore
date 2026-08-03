@@ -15,23 +15,26 @@ export default function Home() {
 
   useEffect(() => {
     const q = query(collection(db, 'movies'));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const rawMovies = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Movie[];
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      // Defer processing slightly to let page transitions run smoothly
+      setTimeout(() => {
+        const rawMovies = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Movie[];
 
-      const sorted = sortNewestFirst(rawMovies);
-      setMovies(sorted);
-      setMoviesCache(sorted);
-      setLoading(false);
+        const sorted = sortNewestFirst(rawMovies);
+        setMovies(sorted);
+        setMoviesCache(sorted);
+        setLoading(false);
 
-      // Only enrich the hero movie in background for banner backdrop if missing
-      if (sorted.length > 0 && (!sorted[0].backdrops || sorted[0].backdrops.length === 0)) {
-        enrichMovieWithTmdb(sorted[0]).then(enrichedHero => {
-          setMovies(prev => prev.map(m => m.id === enrichedHero.id ? enrichedHero : m));
-        });
-      }
+        // Only enrich the hero movie in background for banner backdrop if missing
+        if (sorted.length > 0 && (!sorted[0].backdrops || sorted[0].backdrops.length === 0)) {
+          enrichMovieWithTmdb(sorted[0]).then(enrichedHero => {
+            setMovies(prev => prev.map(m => m.id === enrichedHero.id ? enrichedHero : m));
+          });
+        }
+      }, 50);
     });
 
     return () => unsubscribe();

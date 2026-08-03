@@ -1,10 +1,11 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Movie, formatRuntime } from '@/lib/movies';
 
-export default function MovieCard({ movie }: { movie: Movie }) {
+export default memo(function MovieCard({ movie }: { movie: Movie }) {
   return (
     <Link 
       href={`/watch/${movie.id}`} 
@@ -65,4 +66,4 @@ export default function MovieCard({ movie }: { movie: Movie }) {
       </div>
     </Link>
   );
-}
+});

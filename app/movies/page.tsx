@@ -15,19 +15,21 @@ export default function MoviesPage() {
 
   useEffect(() => {
     const q = query(collection(db, 'movies'));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const rawMovies = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Movie[];
-      setMoviesCache(rawMovies);
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setTimeout(() => {
+        const rawMovies = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Movie[];
+        setMoviesCache(rawMovies);
 
-      // Filter only movies
-      const movieOnly = rawMovies.filter(m => !isSeriesItem(m));
+        // Filter only movies
+        const movieOnly = rawMovies.filter(m => !isSeriesItem(m));
 
-      const sorted = sortNewestFirst(movieOnly);
-      setMovies(sorted);
-      setLoading(false);
+        const sorted = sortNewestFirst(movieOnly);
+        setMovies(sorted);
+        setLoading(false);
+      }, 50);
     });
 
     return () => unsubscribe();
