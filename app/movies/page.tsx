@@ -45,7 +45,7 @@ export default function MoviesPage() {
             <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2">
               <span>🎬</span> All Movies
             </h1>
-            <p className="text-xs text-gray-400 mt-1">Browse all high quality movies available on FlixCore</p>
+            <p className="text-xs text-gray-400 mt-1">Browse all high quality movies available on ViewR</p>
           </div>
           <span className="text-xs font-bold text-accent bg-accent/15 border border-accent/30 px-3 py-1 rounded-full">
             {movies.length} Movies

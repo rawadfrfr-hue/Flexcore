@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - FlixCore</title>
+  <title>Admin Dashboard - ViewR</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -23,7 +23,7 @@
     <!-- Top Header Bar with + Button -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-gray-800">
       <div>
-        <h1 class="text-3xl font-bold tracking-tight">FlixCore Admin Dashboard</h1>
+        <h1 class="text-3xl font-bold tracking-tight">ViewR Admin Dashboard</h1>
         <p class="text-xs text-gray-400 mt-1">Manage Movies, Web Series, Categories & TMDB Imports</p>
       </div>
       
@@ -39,7 +39,7 @@
       <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 w-full max-w-md shadow-2xl relative">
         <button id="closeChoiceBtn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl p-1">✕</button>
         <h2 class="text-xl font-bold mb-2 text-center">Add New Content</h2>
-        <p class="text-xs text-gray-400 text-center mb-6">Choose how you want to add a Movie or Web Series to FlixCore:</p>
+        <p class="text-xs text-gray-400 text-center mb-6">Choose how you want to add a Movie or Web Series to ViewR:</p>
         
         <div class="grid grid-cols-1 gap-4">
           <!-- Manual Option -->
@@ -208,11 +208,80 @@
       </form>
     </div>
 
+    <!-- Featured Movie Selector Banner -->
+    <div class="bg-gradient-to-r from-yellow-950/40 via-gray-800 to-gray-800 rounded-lg p-5 mb-8 border border-yellow-600/40 relative shadow-xl">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
+        <div>
+          <h2 class="text-lg font-bold text-yellow-400 flex items-center gap-2">
+            <span>⭐</span> Homepage Featured Movie (Pinned Hero)
+          </h2>
+          <p class="text-xs text-gray-400 mt-0.5">Select a specific movie or series to stay on the Homepage Hero section until changed.</p>
+        </div>
+        <button id="openFeaturedModalBtn" class="bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold px-4 py-2 rounded-lg text-xs flex items-center gap-1.5 shadow-lg shadow-yellow-500/20 transition-all active:scale-95 cursor-pointer shrink-0">
+          <span>📌 Select / Change Featured Movie</span>
+        </button>
+      </div>
+      <div id="currentFeaturedDisplay" class="bg-gray-900/90 p-3 rounded-lg border border-gray-700/80 flex items-center justify-between gap-4">
+        <span class="text-xs text-gray-400">Loading current featured movie...</span>
+      </div>
+    </div>
+
+    <!-- Featured Movie Selection Modal -->
+    <div id="featuredModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div class="bg-gray-800 rounded-xl p-6 border border-yellow-500/40 w-full max-w-xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <button id="closeFeaturedModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl p-1">✕</button>
+        <h2 class="text-xl font-bold text-yellow-400 mb-1 flex items-center gap-2">
+          <span>⭐</span> Select Homepage Featured Movie
+        </h2>
+        <p class="text-xs text-gray-400 mb-4">Choose an item from your library or search TMDB to pin as Featured Hero on the website.</p>
+
+        <!-- Library Selection Dropdown -->
+        <div class="space-y-3 mb-6 bg-gray-900/60 p-4 rounded-lg border border-gray-700">
+          <label class="block text-xs font-semibold text-yellow-300">Choose from Existing Library:</label>
+          <select id="featuredLibrarySelect" class="w-full bg-gray-900 border border-gray-700 rounded p-2.5 text-white focus:outline-none focus:border-yellow-500 text-sm font-semibold">
+            <!-- Dynamically populated -->
+          </select>
+          <button id="setFeaturedFromLibraryBtn" class="bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold text-xs py-2.5 px-4 rounded-lg transition-colors w-full cursor-pointer shadow">
+            Set Selected Item as Featured Movie
+          </button>
+        </div>
+
+        <div class="border-t border-gray-700 pt-4">
+          <label class="block text-xs font-semibold text-yellow-300 mb-2">Or Search TMDB to Import & Pin directly as Featured:</label>
+          <div class="flex gap-2 mb-3">
+            <input type="text" id="featuredTmdbInput" placeholder="Enter movie/series title..." class="flex-1 bg-gray-900 border border-gray-700 rounded p-2 text-white text-sm focus:outline-none focus:border-yellow-500">
+            <button id="featuredTmdbSearchBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 rounded transition-colors cursor-pointer">Search</button>
+          </div>
+          <div id="featuredTmdbLoading" class="hidden text-xs text-gray-400 mb-2">Searching TMDB...</div>
+          <div id="featuredTmdbResults" class="space-y-2 max-h-60 overflow-y-auto">
+            <!-- Results injected here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Manage Items Section -->
     <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-        <h2 class="text-xl font-semibold">Manage Library</h2>
-        <button id="syncAllTmdbBtn" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded transition-colors text-xs flex items-center gap-1">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-3 border-b border-gray-700">
+        <div>
+          <h2 class="text-xl font-semibold">Manage Library</h2>
+          
+          <!-- Select All & Multi Delete Toolbar -->
+          <div class="flex items-center gap-3 mt-2 flex-wrap">
+            <label class="flex items-center gap-2 text-xs font-bold text-gray-300 cursor-pointer select-none bg-gray-900 px-3 py-1.5 rounded border border-gray-700 hover:border-accent">
+              <input type="checkbox" id="selectAllCheckbox" class="w-4 h-4 rounded accent-accent cursor-pointer">
+              <span>Select All</span>
+            </label>
+            <span id="selectedCountBadge" class="hidden text-xs bg-accent/20 border border-accent/40 text-accent font-bold px-2.5 py-1 rounded">
+              0 selected
+            </span>
+            <button id="batchDeleteBtn" class="hidden bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-md shadow-red-900/30 cursor-pointer">
+              <span>🗑️ Delete Selected</span>
+              <span id="batchDeleteBadge" class="bg-black/40 px-1.5 py-0.5 rounded text-[10px]">0</span>
+            </button>
+          </div>
+        </div>
+        <button id="syncAllTmdbBtn" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded transition-colors text-xs flex items-center gap-1 shrink-0">
           ⚡ Upgrade / Sync All Items with TMDB Details
         </button>
       </div>
@@ -741,6 +810,261 @@
     const closeEditBtn = document.getElementById('closeEditBtn');
 
     let movies = [];
+    let selectedMovieIds = new Set();
+
+    // Featured Modal Elements
+    const openFeaturedModalBtn = document.getElementById('openFeaturedModalBtn');
+    const closeFeaturedModalBtn = document.getElementById('closeFeaturedModalBtn');
+    const featuredModal = document.getElementById('featuredModal');
+    const featuredLibrarySelect = document.getElementById('featuredLibrarySelect');
+    const setFeaturedFromLibraryBtn = document.getElementById('setFeaturedFromLibraryBtn');
+    const featuredTmdbInput = document.getElementById('featuredTmdbInput');
+    const featuredTmdbSearchBtn = document.getElementById('featuredTmdbSearchBtn');
+    const featuredTmdbResults = document.getElementById('featuredTmdbResults');
+    const featuredTmdbLoading = document.getElementById('featuredTmdbLoading');
+
+    // Batch Select Elements
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const selectedCountBadge = document.getElementById('selectedCountBadge');
+    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+    const batchDeleteBadge = document.getElementById('batchDeleteBadge');
+
+    function updateBatchDeleteUI() {
+      const count = selectedMovieIds.size;
+      if (count > 0) {
+        selectedCountBadge.textContent = `${count} selected`;
+        selectedCountBadge.classList.remove('hidden');
+        batchDeleteBadge.textContent = count;
+        batchDeleteBtn.classList.remove('hidden');
+      } else {
+        selectedCountBadge.classList.add('hidden');
+        batchDeleteBtn.classList.add('hidden');
+      }
+
+      if (movies.length > 0 && selectedMovieIds.size === movies.length) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+      } else if (selectedMovieIds.size > 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+      } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+      }
+    }
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          movies.forEach(m => selectedMovieIds.add(m.id));
+        } else {
+          selectedMovieIds.clear();
+        }
+        renderMoviesGrid();
+        updateBatchDeleteUI();
+      });
+    }
+
+    if (batchDeleteBtn) {
+      batchDeleteBtn.addEventListener('click', async () => {
+        const count = selectedMovieIds.size;
+        if (count === 0) return;
+        if (!confirm(`Are you sure you want to delete ${count} selected item(s)? This action cannot be undone.`)) {
+          return;
+        }
+
+        batchDeleteBtn.disabled = true;
+        batchDeleteBtn.innerHTML = `Deleting ${count}...`;
+
+        try {
+          const deletePromises = Array.from(selectedMovieIds).map(id => deleteDoc(doc(db, 'movies', id)));
+          await Promise.all(deletePromises);
+          selectedMovieIds.clear();
+          alert(`Successfully deleted ${count} item(s)!`);
+          fetchMovies();
+        } catch (err) {
+          console.error("Batch delete failed", err);
+          alert("Failed to delete selected items.");
+        } finally {
+          batchDeleteBtn.disabled = false;
+          updateBatchDeleteUI();
+        }
+      });
+    }
+
+    // Featured Movie Management
+    function renderFeaturedBanner() {
+      const display = document.getElementById('currentFeaturedDisplay');
+      if (!display) return;
+
+      const featured = movies.find(m => m.isFeatured === true);
+      
+      // Populate dropdown in featured modal
+      if (featuredLibrarySelect) {
+        featuredLibrarySelect.innerHTML = movies.map(m => `
+          <option value="${m.id}" ${m.isFeatured ? 'selected' : ''}>
+            ${m.isFeatured ? '⭐ ' : ''}[${(m.type || 'movie').toUpperCase()}] ${m.title} (${m.category || 'N/A'})
+          </option>
+        `).join('');
+      }
+
+      if (featured) {
+        display.innerHTML = `
+          <div class="flex items-center gap-3 overflow-hidden">
+            <img src="${featured.posterUrl || ''}" class="w-12 h-16 object-cover rounded shadow border border-yellow-500/50" alt="${escapeHtml(featured.title)}">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="bg-yellow-500 text-black font-extrabold text-[10px] px-2 py-0.5 rounded uppercase">CURRENT FEATURED HERO</span>
+                <span class="text-xs text-yellow-300 font-bold">${featured.voteAverage ? '★ ' + featured.voteAverage : ''}</span>
+              </div>
+              <h4 class="font-extrabold text-sm text-white mt-1">${escapeHtml(featured.title)}</h4>
+              <p class="text-xs text-gray-400 truncate max-w-md">${escapeHtml(featured.description || 'No overview')}</p>
+            </div>
+          </div>
+          <button class="remove-featured-btn text-xs bg-red-600/30 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/50 px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer">
+            Unpin Featured
+          </button>
+        `;
+
+        display.querySelector('.remove-featured-btn')?.addEventListener('click', async () => {
+          if (confirm('Unpin this movie from Featured Hero? The homepage will fallback to showing the newest item.')) {
+            await updateDoc(doc(db, 'movies', featured.id), { isFeatured: false });
+            fetchMovies();
+          }
+        });
+      } else {
+        const latest = movies.length > 0 ? movies[0] : null;
+        display.innerHTML = `
+          <div class="text-xs text-gray-400">
+            <span class="font-bold text-gray-300">No custom featured movie pinned.</span> 
+            ${latest ? `Homepage is currently displaying latest item: <span class="text-yellow-400 font-bold">"${escapeHtml(latest.title)}"</span>` : ''}
+          </div>
+          <button id="quickPinLatestBtn" class="text-xs bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold px-3 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">
+            ⭐ Pin Latest as Featured
+          </button>
+        `;
+
+        display.querySelector('#quickPinLatestBtn')?.addEventListener('click', async () => {
+          if (latest) {
+            await setFeaturedMovie(latest.id);
+          }
+        });
+      }
+    }
+
+    async function setFeaturedMovie(targetId) {
+      try {
+        const updates = movies.map(m => {
+          const isTarget = m.id === targetId;
+          if (m.isFeatured !== isTarget) {
+            return updateDoc(doc(db, 'movies', m.id), { isFeatured: isTarget });
+          }
+          return Promise.resolve();
+        });
+        await Promise.all(updates);
+        if (featuredModal) featuredModal.classList.add('hidden');
+        fetchMovies();
+      } catch (err) {
+        console.error("Failed to set featured movie", err);
+        alert("Failed to set featured movie");
+      }
+    }
+
+    if (openFeaturedModalBtn) {
+      openFeaturedModalBtn.addEventListener('click', () => {
+        featuredModal.classList.remove('hidden');
+      });
+    }
+
+    if (closeFeaturedModalBtn) {
+      closeFeaturedModalBtn.addEventListener('click', () => {
+        featuredModal.classList.add('hidden');
+      });
+    }
+
+    if (setFeaturedFromLibraryBtn) {
+      setFeaturedFromLibraryBtn.addEventListener('click', async () => {
+        const selectedId = featuredLibrarySelect.value;
+        if (selectedId) {
+          setFeaturedFromLibraryBtn.textContent = 'Setting as Featured...';
+          await setFeaturedMovie(selectedId);
+          setFeaturedFromLibraryBtn.textContent = 'Set Selected Item as Featured Movie';
+        }
+      });
+    }
+
+    if (featuredTmdbSearchBtn) {
+      featuredTmdbSearchBtn.addEventListener('click', async () => {
+        const q = featuredTmdbInput.value.trim();
+        if (!q) return;
+        featuredTmdbLoading.classList.remove('hidden');
+        featuredTmdbResults.innerHTML = '';
+
+        try {
+          const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(q)}`);
+          const data = await res.json();
+          featuredTmdbLoading.classList.add('hidden');
+
+          if (data.results && data.results.length > 0) {
+            data.results.forEach(item => {
+              if (item.media_type !== 'movie' && item.media_type !== 'tv') return;
+              if (!item.poster_path) return;
+              
+              const title = item.title || item.name;
+              const isSeries = item.media_type === 'tv';
+              const posterUrl = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
+
+              const div = document.createElement('div');
+              div.className = "flex items-center justify-between bg-gray-900 p-2 rounded border border-gray-700 text-xs";
+              div.innerHTML = `
+                <div class="flex items-center gap-2 overflow-hidden">
+                  <img src="${posterUrl}" class="w-8 h-12 object-cover rounded" alt="">
+                  <div class="truncate">
+                    <div class="font-bold text-white truncate">${escapeHtml(title)}</div>
+                    <div class="text-[10px] text-gray-400">${isSeries ? 'Series' : 'Movie'} • ${item.release_date || item.first_air_date || 'N/A'}</div>
+                  </div>
+                </div>
+                <button class="pin-tmdb-btn bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold px-3 py-1.5 rounded shrink-0 cursor-pointer">
+                  Import & Pin Featured
+                </button>
+              `;
+
+              div.querySelector('.pin-tmdb-btn').addEventListener('click', async (e) => {
+                e.target.textContent = 'Importing...';
+                e.target.disabled = true;
+
+                const movieObj = {
+                  title: title,
+                  type: isSeries ? 'series' : 'movie',
+                  category: isSeries ? 'HOLLYWOOD' : 'HOLLYWOOD',
+                  genre: isSeries ? 'TV Series' : 'Movie',
+                  description: item.overview,
+                  posterUrl: posterUrl,
+                  videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
+                  tmdbId: item.id,
+                  isFeatured: true
+                };
+
+                // Unfeature others first
+                const unfeaturePromises = movies.filter(m => m.isFeatured).map(m => updateDoc(doc(db, 'movies', m.id), { isFeatured: false }));
+                await Promise.all(unfeaturePromises);
+
+                await importSingle(movieObj);
+                featuredModal.classList.add('hidden');
+                fetchMovies();
+              });
+
+              featuredTmdbResults.appendChild(div);
+            });
+          } else {
+            featuredTmdbResults.innerHTML = '<div class="text-xs text-gray-400">No matching items found on TMDB.</div>';
+          }
+        } catch (err) {
+          console.error("Featured TMDB search error", err);
+          featuredTmdbLoading.classList.add('hidden');
+        }
+      });
+    }
 
     async function fetchMovies() {
       loading.style.display = 'block';
@@ -752,7 +1076,9 @@
         movies = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
         loading.style.display = 'none';
-        
+        renderFeaturedBanner();
+        updateBatchDeleteUI();
+
         if (movies.length === 0) {
           noMovies.style.display = 'block';
         } else {
@@ -800,7 +1126,10 @@
 
       sorted.forEach(movie => {
         const card = document.createElement('div');
-        card.className = 'bg-gray-900/90 border border-gray-700/80 rounded-2xl overflow-hidden flex flex-col shadow-lg hover:border-accent/60 transition-all duration-300 group';
+        const isChecked = selectedMovieIds.has(movie.id);
+        const isFeatured = movie.isFeatured === true;
+
+        card.className = `bg-gray-900/90 border ${isFeatured ? 'border-2 border-yellow-400 shadow-xl shadow-yellow-500/20' : isChecked ? 'border-2 border-accent' : 'border-gray-700/80'} rounded-2xl overflow-hidden flex flex-col shadow-lg hover:border-accent/60 transition-all duration-300 group relative`;
         
         const typeBadge = (movie.type === 'series') 
           ? `<span class="bg-purple-900/90 text-purple-200 border border-purple-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase shadow">SERIES</span>` 
@@ -810,22 +1139,24 @@
           ? `<span class="bg-accent text-white border border-accent text-[10px] font-black px-2 py-0.5 rounded-full uppercase shadow">${escapeHtml(movie.category)}</span>`
           : '';
 
-        const hasTmdb = (movie.runtime || movie.voteAverage || movie.director);
-        const tmdbBadge = hasTmdb 
-          ? `<span class="text-[10px] bg-green-900/90 text-green-300 px-2 py-0.5 rounded-full border border-green-600 font-bold shadow">✓ TMDB</span>`
-          : `<span class="text-[10px] bg-yellow-900/90 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-600 font-bold shadow">Basic</span>`;
+        const featuredBadge = isFeatured
+          ? `<span class="bg-yellow-500 text-black border border-yellow-400 text-[10px] font-black px-2 py-0.5 rounded-full uppercase shadow-lg">⭐ FEATURED</span>`
+          : '';
 
         const posterSrc = movie.posterUrl || 'https://via.placeholder.com/300x450?text=No+Poster';
 
         card.innerHTML = `
+          <!-- Select Checkbox -->
+          <input type="checkbox" class="card-checkbox absolute top-2 left-2 z-30 w-5 h-5 rounded accent-accent cursor-pointer shadow-lg" data-id="${movie.id}" ${isChecked ? 'checked' : ''}>
+
           <div class="relative aspect-[2/3] w-full bg-gray-950 overflow-hidden">
             <img src="${posterSrc}" alt="${escapeHtml(movie.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-            <div class="absolute top-2 left-2 flex flex-wrap gap-1 z-10">
+            <div class="absolute top-2 left-9 flex flex-wrap gap-1 z-10">
               ${typeBadge}
               ${catBadge}
             </div>
             <div class="absolute top-2 right-2 z-10">
-              ${tmdbBadge}
+              ${featuredBadge}
             </div>
           </div>
           <div class="p-3 flex flex-col justify-between flex-1 space-y-2">
@@ -835,26 +1166,55 @@
               </h3>
               <p class="text-xs text-gray-400 line-clamp-1 mt-0.5">${escapeHtml(movie.genre || 'No genre')}</p>
             </div>
-            <div class="flex items-center justify-between pt-2 border-t border-gray-800 gap-1">
-              <button data-id="${movie.id}" class="edit-btn px-2.5 py-1 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/50 rounded-lg text-xs font-bold transition-all cursor-pointer">
-                ✏️ Edit
+            
+            <div class="space-y-1.5 pt-2 border-t border-gray-800">
+              <button data-id="${movie.id}" class="set-featured-btn w-full py-1 text-xs font-black rounded-lg transition-all cursor-pointer ${isFeatured ? 'bg-yellow-500 text-black' : 'bg-yellow-600/20 hover:bg-yellow-500 hover:text-black text-yellow-300 border border-yellow-500/40'} flex items-center justify-center gap-1">
+                ${isFeatured ? '⭐ Pinned Featured Hero' : '⭐ Set as Featured'}
               </button>
-              <button data-id="${movie.id}" class="delete-btn px-2.5 py-1 bg-red-600/30 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/50 rounded-lg text-xs font-bold transition-all cursor-pointer">
-                🗑️ Delete
-              </button>
+              <div class="flex items-center justify-between gap-1">
+                <button data-id="${movie.id}" class="edit-btn flex-1 py-1 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/50 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                  ✏️ Edit
+                </button>
+                <button data-id="${movie.id}" class="delete-btn flex-1 py-1 bg-red-600/30 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/50 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                  🗑️ Delete
+                </button>
+              </div>
             </div>
           </div>
         `;
         moviesGrid.appendChild(card);
       });
 
+      // Checkbox click listeners
+      document.querySelectorAll('.card-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const id = e.target.getAttribute('data-id');
+          if (e.target.checked) {
+            selectedMovieIds.add(id);
+          } else {
+            selectedMovieIds.delete(id);
+          }
+          updateBatchDeleteUI();
+          renderMoviesGrid();
+        });
+      });
+
+      // Set Featured Button listeners
+      document.querySelectorAll('.set-featured-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.target.closest('button').getAttribute('data-id');
+          await setFeaturedMovie(id);
+        });
+      });
+
       // Delete buttons
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
-          const id = e.target.getAttribute('data-id');
+          const id = e.target.closest('button').getAttribute('data-id');
           if (confirm('Are you sure you want to delete this item?')) {
             try {
               await deleteDoc(doc(db, 'movies', id));
+              selectedMovieIds.delete(id);
               fetchMovies();
             } catch (error) {
               console.error("Error deleting item:", error);
@@ -866,7 +1226,7 @@
       // Edit buttons
       document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-          const id = e.target.getAttribute('data-id');
+          const id = e.target.closest('button').getAttribute('data-id');
           const movie = movies.find(m => m.id === id);
           if (movie) {
             document.getElementById('editId').value = movie.id;

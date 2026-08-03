@@ -13,7 +13,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'FlixCore - Watch Movies & Series',
+  title: 'ViewR - Watch Movies & Series',
   description: 'Stream latest movies and web series in high quality',
 };
 

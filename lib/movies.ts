@@ -36,12 +36,43 @@ export function setMoviesCache(movies: Movie[]) {
 
 export function isSeriesItem(m: Movie): boolean {
   if (m.type === 'series' || m.type === 'tv') return true;
-  const cat = (m.category || '').toLowerCase();
-  const genre = (m.genre || '').toLowerCase();
-  if (cat.includes('series') || cat === 'k-drama' || cat === 'anime' || genre.includes('tv series') || genre.includes('web series')) {
+  if (m.seasonsCount && m.seasonsCount > 0) return true;
+
+  const cat = (m.category || '').toLowerCase().trim();
+  const genre = (m.genre || '').toLowerCase().trim();
+
+  if (
+    cat.includes('series') || 
+    cat.includes('k-drama') || 
+    cat.includes('kdrama') || 
+    cat.includes('anime') || 
+    cat === 'bangla' ||
+    cat === 'hollywood' ||
+    cat === 'hindi' ||
+    cat === 'bangla dubbed' ||
+    genre.includes('tv series') || 
+    genre.includes('web series') || 
+    genre.includes('k-drama') || 
+    genre.includes('kdrama') || 
+    genre.includes('anime') ||
+    genre.includes('tv show')
+  ) {
+    if (m.type === 'movie') {
+      // If explicitly movie, only count as series if category or genre explicitly has series indicator
+      return (
+        cat.includes('series') ||
+        cat.includes('k-drama') ||
+        cat.includes('kdrama') ||
+        cat.includes('anime') ||
+        genre.includes('tv series') ||
+        genre.includes('web series') ||
+        genre.includes('k-drama') ||
+        genre.includes('anime')
+      );
+    }
     return true;
   }
-  if (m.type === 'movie') return false;
+
   return false;
 }
 

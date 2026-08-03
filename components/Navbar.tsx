@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Logo from '@/components/Logo';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { Movie } from '@/lib/movies';
@@ -57,9 +58,9 @@ export default function Navbar() {
               <Link 
                 href="/" 
                 onClick={() => setIsDrawerOpen(false)}
-                className="text-xl font-black text-accent tracking-tight flex items-center gap-2"
+                className="flex items-center gap-2 click-effect active:scale-95"
               >
-                <span>FLIXCORE</span>
+                <Logo size="sm" />
                 <span className="text-[9px] bg-accent/20 border border-accent/40 text-accent px-1.5 py-0.5 rounded uppercase font-semibold">MENU</span>
               </Link>
               <button 
@@ -188,7 +189,7 @@ export default function Navbar() {
             </nav>
 
             <div className="pt-4 border-t border-white/10 text-[11px] text-gray-500 text-center">
-              FlixCore Streaming Platform
+              ViewR Streaming Platform
             </div>
           </motion.div>
         </div>
@@ -210,9 +211,8 @@ export default function Navbar() {
             </svg>
           </button>
 
-          <Link href="/" className="text-[20px] sm:text-[22px] md:text-[26px] font-black tracking-tighter text-accent flex items-center gap-2 click-effect active:scale-95">
-            <span>FLIXCORE</span>
-            <span className="text-[10px] bg-accent/20 border border-accent/40 text-accent font-semibold px-2 py-0.5 rounded tracking-normal uppercase hidden sm:inline-block">TMDB</span>
+          <Link href="/" className="click-effect active:scale-95">
+            <Logo size="md" showTag />
           </Link>
 
           {/* Quick Nav Links */}

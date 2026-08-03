@@ -29,9 +29,11 @@ export default function Home() {
         setMoviesCache(sorted);
         setLoading(false);
 
+        const currentHero = sorted.find(m => (m as any).isFeatured === true) || (sorted.length > 0 ? sorted[0] : null);
+
         // Only enrich the hero movie in background for banner backdrop if missing
-        if (sorted.length > 0 && (!sorted[0].backdrops || sorted[0].backdrops.length === 0)) {
-          enrichMovieWithTmdb(sorted[0]).then(enrichedHero => {
+        if (currentHero && (!currentHero.backdrops || currentHero.backdrops.length === 0)) {
+          enrichMovieWithTmdb(currentHero).then(enrichedHero => {
             setMovies(prev => prev.map(m => m.id === enrichedHero.id ? enrichedHero : m));
           });
         }
@@ -41,7 +43,8 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  const heroMovie = movies.length > 0 ? movies[0] : null;
+  const featuredMovie = movies.find(m => (m as any).isFeatured === true);
+  const heroMovie = featuredMovie || (movies.length > 0 ? movies[0] : null);
 
   const moviesList = movies.filter(m => !isSeriesItem(m));
   const seriesList = movies.filter(m => isSeriesItem(m));

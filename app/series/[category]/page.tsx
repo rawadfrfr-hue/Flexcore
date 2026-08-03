@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import MovieCard from '@/components/MovieCard';
+import dynamic from 'next/dynamic';
+const InfiniteMovieGrid = dynamic(() => import('@/components/InfiniteMovieGrid'), { ssr: false });
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
@@ -34,12 +35,34 @@ export default function SeriesCategoryPage({ params }: { params: Promise<{ categ
       const filtered = rawMovies.filter(m => {
         if (!isSeriesItem(m)) return false;
 
-        const cat = (m.category || '').toLowerCase().replace(/-/g, ' ');
-        const genre = (m.genre || '').toLowerCase().replace(/-/g, ' ');
-        const title = (m.title || '').toLowerCase().replace(/-/g, ' ');
-        const target = category.toLowerCase().replace(/-/g, ' ');
+        const cat = (m.category || '').toLowerCase().trim();
+        const genre = (m.genre || '').toLowerCase().trim();
+        const title = (m.title || '').toLowerCase().trim();
+        const target = category.toLowerCase().trim();
 
-        return cat.includes(target) || genre.includes(target) || title.includes(target);
+        if (target === 'bangla-dubbed') {
+          return cat.includes('bangla') && (cat.includes('dubbed') || genre.includes('dubbed'));
+        }
+        if (target === 'bangla') {
+          if (cat.includes('dubbed')) return false;
+          return cat === 'bangla' || cat.includes('bangla') || genre.includes('bangla') || title.includes('bangla');
+        }
+        if (target === 'k-drama') {
+          return cat.includes('k-drama') || cat.includes('kdrama') || cat.includes('k drama') || genre.includes('k-drama') || genre.includes('kdrama') || genre.includes('korea');
+        }
+        if (target === 'anime') {
+          return cat.includes('anime') || genre.includes('anime') || title.includes('anime');
+        }
+        if (target === 'hindi') {
+          return cat === 'hindi' || (cat.includes('hindi') && !cat.includes('dubbed')) || genre.includes('hindi');
+        }
+        if (target === 'hollywood') {
+          return cat === 'hollywood' || cat.includes('hollywood') || genre.includes('hollywood') || genre.includes('english');
+        }
+
+        const catNorm = cat.replace(/-/g, ' ');
+        const targetNorm = target.replace(/-/g, ' ');
+        return catNorm.includes(targetNorm) || genre.includes(targetNorm) || title.includes(targetNorm);
       });
 
       const sorted = sortNewestFirst(filtered);
@@ -52,7 +75,6 @@ export default function SeriesCategoryPage({ params }: { params: Promise<{ categ
 
   return (
     <div className="min-h-screen bg-[#08080a] text-white flex flex-col font-sans">
-
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <div>
@@ -73,11 +95,7 @@ export default function SeriesCategoryPage({ params }: { params: Promise<{ categ
             No series found in this category.
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-            {series.map(item => (
-              <MovieCard key={item.id} movie={item} />
-            ))}
-          </div>
+          <InfiniteMovieGrid movies={series} />
         )}
       </main>
     </div>
