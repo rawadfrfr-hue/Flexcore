@@ -11,6 +11,9 @@ import { Movie, enrichMovieWithTmdb, formatRuntime } from '@/lib/movies';
 
 type ServerSource = 'vidsrc' | 'autoembed' | 'vidlink' | 'twoembed' | 'smashystream' | 'vidsrc_icu' | 'videasy' | 'direct';
 
+// Set to true to unhide multi-provider & server mirror selector in the future
+const SHOW_OTHER_PROVIDERS = false;
+
 export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [movie, setMovie] = useState<Movie | null>(null);
@@ -19,7 +22,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
 
   // VidSrc & Multi-Provider Streaming States
-  const [selectedServer, setSelectedServer] = useState<ServerSource>('vidsrc');
+  const [selectedServer, setSelectedServer] = useState<ServerSource>('videasy');
   const [selectedSubServer, setSelectedSubServer] = useState<number>(1);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
@@ -254,146 +257,148 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
 
 
 
-        {/* Multi-Provider Streaming Server Selector */}
-        <div className="bg-[#0f0f14] p-4.5 rounded-2xl border border-white/10 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2 text-xs font-extrabold text-gray-200">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>1. Choose Streaming Provider:</span>
-              <span className="text-[10px] text-gray-400 font-normal hidden sm:inline">(Select a provider first, then choose a server mirror below)</span>
-            </div>
-            <span className="text-[10px] bg-accent/20 text-accent font-bold px-2.5 py-0.5 rounded-full border border-accent/30">
-              Auto-Multi Provider
-            </span>
-          </div>
-
-          {/* Provider Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10">
-            {tmdbId && (
-              <>
-                <button
-                  onClick={() => { setSelectedServer('vidsrc'); setSelectedSubServer(1); }}
-                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
-                    selectedServer === 'vidsrc'
-                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
-                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <span>⚡ VidSrc (5 Servers)</span>
-                  <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono">1080p</span>
-                </button>
-
-                <button
-                  onClick={() => { setSelectedServer('autoembed'); setSelectedSubServer(1); }}
-                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
-                    selectedServer === 'autoembed'
-                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
-                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <span>🚀 AutoEmbed</span>
-                  <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-mono">Ultra HD</span>
-                </button>
-
-                <button
-                  onClick={() => { setSelectedServer('vidlink'); setSelectedSubServer(1); }}
-                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
-                    selectedServer === 'vidlink'
-                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
-                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <span>🎬 VidLink</span>
-                  <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded font-mono">Auto-Subs</span>
-                </button>
-
-                <button
-                  onClick={() => { setSelectedServer('twoembed'); setSelectedSubServer(1); }}
-                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
-                    selectedServer === 'twoembed'
-                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
-                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <span>🌐 2Embed</span>
-                  <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-mono">Multi-Lang</span>
-                </button>
-
-                <button
-                  onClick={() => { setSelectedServer('smashystream'); setSelectedSubServer(1); }}
-                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
-                    selectedServer === 'smashystream'
-                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
-                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <span>✨ SmashyStream</span>
-                  <span className="text-[9px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded font-mono">Fast Mirror</span>
-                </button>
-
-                <button
-                  onClick={() => { setSelectedServer('vidsrc_icu'); setSelectedSubServer(1); }}
-                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
-                    selectedServer === 'vidsrc_icu'
-                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
-                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <span>🍿 VidSrc ICU</span>
-                  <span className="text-[9px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded font-mono">Sub/Dub</span>
-                </button>
-
-                <button
-                  onClick={() => { setSelectedServer('videasy'); setSelectedSubServer(1); }}
-                  className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
-                    selectedServer === 'videasy'
-                      ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
-                      : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <span>📺 Videasy</span>
-                  <span className="text-[9px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded font-mono">Fast</span>
-                </button>
-              </>
-            )}
-
-            <button
-              onClick={() => setSelectedServer('direct')}
-              className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
-                selectedServer === 'direct'
-                  ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
-                  : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-              }`}
-            >
-              <span>📽️ Direct MP4</span>
-              <span className="text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded font-mono">Upload</span>
-            </button>
-          </div>
-
-          {/* Sub-Server / Mirror Selector */}
-          {selectedServer !== 'direct' && subServers.length > 0 && (
-            <div className="pt-3 border-t border-white/10 space-y-2">
-              <div className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
-                <span>2. Select Server Mirror for <strong className="text-accent uppercase">{selectedServer}</strong>:</span>
+        {/* Multi-Provider Streaming Server Selector (Hidden when SHOW_OTHER_PROVIDERS is false) */}
+        {SHOW_OTHER_PROVIDERS && (
+          <div className="bg-[#0f0f14] p-4.5 rounded-2xl border border-white/10 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2 text-xs font-extrabold text-gray-200">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>1. Choose Streaming Provider:</span>
+                <span className="text-[10px] text-gray-400 font-normal hidden sm:inline">(Select a provider first, then choose a server mirror below)</span>
               </div>
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {subServers.map(s => (
+              <span className="text-[10px] bg-accent/20 text-accent font-bold px-2.5 py-0.5 rounded-full border border-accent/30">
+                Auto-Multi Provider
+              </span>
+            </div>
+
+            {/* Provider Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10">
+              {tmdbId && (
+                <>
                   <button
-                    key={s.id}
-                    onClick={() => setSelectedSubServer(s.id)}
-                    className={`shrink-0 text-xs px-3 py-1.5 rounded-lg font-bold transition-all click-effect touch-manipulation border ${
-                      selectedSubServer === s.id
-                        ? 'bg-white text-black border-white shadow-md font-extrabold'
+                    onClick={() => { setSelectedServer('vidsrc'); setSelectedSubServer(1); }}
+                    className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                      selectedServer === 'vidsrc'
+                        ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
                         : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                     }`}
                   >
-                    {s.name}
+                    <span>⚡ VidSrc (5 Servers)</span>
+                    <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono">1080p</span>
                   </button>
-                ))}
-              </div>
+
+                  <button
+                    onClick={() => { setSelectedServer('autoembed'); setSelectedSubServer(1); }}
+                    className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                      selectedServer === 'autoembed'
+                        ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>🚀 AutoEmbed</span>
+                    <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-mono">Ultra HD</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setSelectedServer('vidlink'); setSelectedSubServer(1); }}
+                    className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                      selectedServer === 'vidlink'
+                        ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>🎬 VidLink</span>
+                    <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded font-mono">Auto-Subs</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setSelectedServer('twoembed'); setSelectedSubServer(1); }}
+                    className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                      selectedServer === 'twoembed'
+                        ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>🌐 2Embed</span>
+                    <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-mono">Multi-Lang</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setSelectedServer('smashystream'); setSelectedSubServer(1); }}
+                    className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                      selectedServer === 'smashystream'
+                        ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>✨ SmashyStream</span>
+                    <span className="text-[9px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded font-mono">Fast Mirror</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setSelectedServer('vidsrc_icu'); setSelectedSubServer(1); }}
+                    className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                      selectedServer === 'vidsrc_icu'
+                        ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>🍿 VidSrc ICU</span>
+                    <span className="text-[9px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded font-mono">Sub/Dub</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setSelectedServer('videasy'); setSelectedSubServer(1); }}
+                    className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                      selectedServer === 'videasy'
+                        ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>📺 Videasy</span>
+                    <span className="text-[9px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded font-mono">Fast</span>
+                  </button>
+                </>
+              )}
+
+              <button
+                onClick={() => setSelectedServer('direct')}
+                className={`shrink-0 text-xs px-3.5 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border flex items-center gap-1.5 ${
+                  selectedServer === 'direct'
+                    ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                    : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                }`}
+              >
+                <span>📽️ Direct MP4</span>
+                <span className="text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded font-mono">Upload</span>
+              </button>
             </div>
-          )}
-        </div>
+
+            {/* Sub-Server / Mirror Selector */}
+            {selectedServer !== 'direct' && subServers.length > 0 && (
+              <div className="pt-3 border-t border-white/10 space-y-2">
+                <div className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
+                  <span>2. Select Server Mirror for <strong className="text-accent uppercase">{selectedServer}</strong>:</span>
+                </div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {subServers.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => setSelectedSubServer(s.id)}
+                      className={`shrink-0 text-xs px-3 py-1.5 rounded-lg font-bold transition-all click-effect touch-manipulation border ${
+                        selectedSubServer === s.id
+                          ? 'bg-white text-black border-white shadow-md font-extrabold'
+                          : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Series Season & Episode Controls */}
         {isSeries && tmdbId && (
