@@ -9,22 +9,16 @@ import { collection, onSnapshot, query } from 'firebase/firestore';
 import { Movie } from '@/lib/movies';
 import { motion, AnimatePresence } from 'motion/react';
 
-export const MOVIE_CATEGORIES = [
-  { slug: 'hindi', label: 'Hindi Movies' },
-  { slug: 'hollywood', label: 'Hollywood Movies' },
+export const CATEGORIES = [
+  { slug: 'bollywood', label: 'BollyWood' },
+  { slug: 'hollywood', label: 'HollyWood' },
   { slug: 'hindi-dubbed', label: 'Hindi Dubbed' },
-  { slug: 'south-indian', label: 'South Indian' },
-  { slug: 'bangla', label: 'Bangla Movies' },
+  { slug: 'south-hindi', label: 'South Hindi' },
+  { slug: 'web-series', label: 'Web Series' },
 ];
 
-export const SERIES_CATEGORIES = [
-  { slug: 'bangla', label: 'Bangla Series' },
-  { slug: 'hollywood', label: 'Hollywood Series' },
-  { slug: 'anime', label: 'Anime Series' },
-  { slug: 'hindi', label: 'Hindi Series' },
-  { slug: 'bangla-dubbed', label: 'Bangla Dubbed' },
-  { slug: 'k-drama', label: 'K-Drama' },
-];
+export const MOVIE_CATEGORIES = CATEGORIES;
+export const SERIES_CATEGORIES = CATEGORIES;
 
 export default function Navbar() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -99,64 +93,15 @@ export default function Navbar() {
                 <span>🔍</span> Search & Explore
               </Link>
 
-              {/* MOVIES Section */}
+              {/* CATEGORIES Section */}
               <div>
                 <div className="text-xs font-black tracking-wider text-accent uppercase px-3 mb-2 flex items-center gap-1.5">
-                  <span>🎬</span> MOVIES
+                  <span>🏷️</span> CATEGORIES
                 </div>
                 <div className="space-y-1 pl-2">
-                  <Link
-                    href="/movies"
-                    onClick={() => setIsDrawerOpen(false)}
-                    className={`block w-full text-left px-3 py-2 rounded-md text-xs font-semibold transition-colors ${
-                      pathname === '/movies'
-                        ? 'bg-accent/20 text-accent border border-accent/30 font-bold'
-                        : 'text-gray-400 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    All Movies
-                  </Link>
-                  {MOVIE_CATEGORIES.map(cat => {
+                  {CATEGORIES.map(cat => {
                     const href = `/movies/${cat.slug}`;
-                    const isActive = pathname === href;
-                    return (
-                      <Link
-                        key={cat.slug}
-                        href={href}
-                        onClick={() => setIsDrawerOpen(false)}
-                        className={`block w-full text-left px-3 py-2 rounded-md text-xs font-semibold transition-colors ${
-                          isActive
-                            ? 'bg-accent text-white font-bold'
-                            : 'text-gray-400 hover:text-white hover:bg-white/5'
-                        }`}
-                      >
-                        {cat.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* SERIES Section */}
-              <div>
-                <div className="text-xs font-black tracking-wider text-accent uppercase px-3 mb-2 flex items-center gap-1.5">
-                  <span>📺</span> WEB SERIES
-                </div>
-                <div className="space-y-1 pl-2">
-                  <Link
-                    href="/series"
-                    onClick={() => setIsDrawerOpen(false)}
-                    className={`block w-full text-left px-3 py-2 rounded-md text-xs font-semibold transition-colors ${
-                      pathname === '/series'
-                        ? 'bg-accent/20 text-accent border border-accent/30 font-bold'
-                        : 'text-gray-400 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    All Web Series
-                  </Link>
-                  {SERIES_CATEGORIES.map(cat => {
-                    const href = `/series/${cat.slug}`;
-                    const isActive = pathname === href;
+                    const isActive = pathname === href || pathname === `/series/${cat.slug}`;
                     return (
                       <Link
                         key={cat.slug}

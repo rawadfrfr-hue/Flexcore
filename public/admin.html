@@ -78,21 +78,12 @@
       </div>
       <p class="text-sm text-gray-400 mb-4">Select Content Type & Category first, then search TMDB to auto-import metadata.</p>
       
-      <!-- Type & Category selectors for TMDB Import -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label class="block text-xs font-semibold text-gray-300 mb-1">Content Type</label>
-          <select id="tmdbMediaType" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent text-sm font-semibold">
-            <option value="movie">Movie</option>
-            <option value="series">Series</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-300 mb-1">Target Category</label>
-          <select id="tmdbCategory" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent text-sm font-semibold">
-            <!-- Dynamic categories inject here -->
-          </select>
-        </div>
+      <!-- Category selector for TMDB Import -->
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-gray-300 mb-1">Target Category</label>
+        <select id="tmdbCategory" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent text-sm font-semibold">
+          <!-- Categories inject here -->
+        </select>
       </div>
 
       <div class="flex gap-2 mb-4">
@@ -115,21 +106,12 @@
         Content added successfully!
       </div>
       <form id="addMovieForm" class="space-y-4">
-        <!-- Type & Category Selection -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-900/60 p-4 rounded-lg border border-gray-700/80">
-          <div>
-            <label class="block text-sm font-semibold text-accent mb-1">Content Type</label>
-            <select id="type" required class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent font-bold">
-              <option value="movie">Movie</option>
-              <option value="series">Series</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-accent mb-1">Category</label>
-            <select id="category" required class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent font-bold">
-              <!-- Dynamic options based on type -->
-            </select>
-          </div>
+        <!-- Category Selection -->
+        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700/80">
+          <label class="block text-sm font-semibold text-accent mb-1">Category</label>
+          <select id="category" required class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent font-bold">
+            <!-- Categories inject here -->
+          </select>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -301,20 +283,11 @@
       <form id="editMovieForm" class="space-y-4">
         <input type="hidden" id="editId">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-900/60 p-3 rounded border border-gray-700">
-          <div>
-            <label class="block text-xs font-semibold text-accent mb-1">Content Type</label>
-            <select id="editType" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent text-sm font-bold">
-              <option value="movie">Movie</option>
-              <option value="series">Series</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-accent mb-1">Category</label>
-            <select id="editCategory" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent text-sm font-bold">
-              <!-- Categories injected dynamically -->
-            </select>
-          </div>
+        <div class="bg-gray-900/60 p-3 rounded border border-gray-700">
+          <label class="block text-xs font-semibold text-accent mb-1">Category</label>
+          <select id="editCategory" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent text-sm font-bold">
+            <!-- Categories injected dynamically -->
+          </select>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -404,29 +377,19 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const movieCategories = [
-      { val: 'HINDI', label: 'Hindi Movies (HINDI)' },
-      { val: 'HOLLYWOOD', label: 'Hollywood Movies (HOLLYWOOD)' },
-      { val: 'HINDI DUBBED', label: 'Hindi Dubbed (HINDI DUBBED)' },
-      { val: 'SOUTH INDIAN', label: 'South Indian (SOUTH INDIAN)' },
-      { val: 'BANGLA', label: 'Bangla Movies (BANGLA)' }
+    const allowedCategories = [
+      { val: 'BollyWood', label: 'BollyWood' },
+      { val: 'HollyWood', label: 'HollyWood' },
+      { val: 'Hindi Dubbed', label: 'Hindi Dubbed' },
+      { val: 'South Hindi', label: 'South Hindi' },
+      { val: 'Web Series', label: 'Web Series' }
     ];
 
-    const seriesCategories = [
-      { val: 'BANGLA', label: 'Bangla Series (BANGLA)' },
-      { val: 'HOLLYWOOD', label: 'Hollywood Series (HOLLYWOOD)' },
-      { val: 'ANIME', label: 'Anime Series (ANIME)' },
-      { val: 'HINDI', label: 'Hindi Series (HINDI)' },
-      { val: 'BANGLA DUBBED', label: 'Bangla Dubbed (BANGLA DUBBED)' },
-      { val: 'K-DRAMA', label: 'K-Drama (K-DRAMA)' }
-    ];
-
-    function populateCategoryDropdown(typeSelectEl, categorySelectEl, defaultCategory = '') {
-      const isSeries = typeSelectEl.value === 'series';
-      const categories = isSeries ? seriesCategories : movieCategories;
-      
-      categorySelectEl.innerHTML = categories.map(cat => {
-        const isSelected = cat.val.toLowerCase() === defaultCategory.toLowerCase() || cat.val === defaultCategory;
+    function populateCategoryDropdown(selectEl, defaultCategory = '') {
+      selectEl.innerHTML = allowedCategories.map(cat => {
+        const isSelected = defaultCategory 
+          ? (cat.val.toLowerCase() === defaultCategory.toLowerCase() || cat.val === defaultCategory)
+          : (cat.val === 'BollyWood');
         return `<option value="${cat.val}" ${isSelected ? 'selected' : ''}>${cat.label}</option>`;
       }).join('');
     }
@@ -477,20 +440,15 @@
       });
     }
 
-    // Dynamic Category Listeners
-    const typeSelect = document.getElementById('type');
+    // Category Select Elements Initialization
     const categorySelect = document.getElementById('category');
-    populateCategoryDropdown(typeSelect, categorySelect);
-    typeSelect.addEventListener('change', () => populateCategoryDropdown(typeSelect, categorySelect));
+    populateCategoryDropdown(categorySelect);
 
-    const tmdbMediaType = document.getElementById('tmdbMediaType');
     const tmdbCategory = document.getElementById('tmdbCategory');
-    populateCategoryDropdown(tmdbMediaType, tmdbCategory);
-    tmdbMediaType.addEventListener('change', () => populateCategoryDropdown(tmdbMediaType, tmdbCategory));
+    populateCategoryDropdown(tmdbCategory);
 
-    const editType = document.getElementById('editType');
     const editCategory = document.getElementById('editCategory');
-    editType.addEventListener('change', () => populateCategoryDropdown(editType, editCategory));
+    populateCategoryDropdown(editCategory);
 
     // TMDB Search Logic
     const TMDB_API_KEY = "40997d508f165094637f1d6f8a9ab148";
@@ -518,19 +476,27 @@
       const query = tmdbSearchInput.value.trim();
       if (!query) return;
       
-      const mediaTypeVal = tmdbMediaType.value; // 'movie' or 'series'
-      const endpoint = mediaTypeVal === 'series' ? 'search/tv' : 'search/movie';
+      const targetCategoryVal = tmdbCategory.value;
+      const isSeriesCat = targetCategoryVal === 'Web Series';
+      const endpoint = isSeriesCat ? 'search/tv' : 'search/movie';
 
       tmdbLoading.style.display = 'block';
       tmdbResults.innerHTML = '';
       
       try {
-        const res = await fetch(`https://api.themoviedb.org/3/${endpoint}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`);
-        const data = await res.json();
+        let res = await fetch(`https://api.themoviedb.org/3/${endpoint}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`);
+        let data = await res.json();
+
+        // Fallback to search/multi if 0 results returned
+        if (!data.results || data.results.length === 0) {
+          const multiRes = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`);
+          data = await multiRes.json();
+        }
+
         tmdbLoading.style.display = 'none';
         
         if (data.results && data.results.length > 0) {
-            renderTmdbResults(data.results, mediaTypeVal);
+            renderTmdbResults(data.results, targetCategoryVal);
         } else {
             tmdbResults.innerHTML = '<p class="text-gray-400 col-span-full text-sm">No items found on TMDB.</p>';
         }
@@ -550,15 +516,16 @@
              .replace(/'/g, "&#039;");
     }
 
-    function renderTmdbResults(results, mediaTypeVal) {
+    function renderTmdbResults(results, targetCategoryVal) {
       tmdbResults.innerHTML = '';
       
-      const targetCategoryVal = tmdbCategory.value;
+      const isSeriesCat = targetCategoryVal === 'Web Series';
+      const mediaTypeVal = isSeriesCat ? 'series' : 'movie';
 
       const importAllBtn = document.createElement('button');
       importAllBtn.className = "col-span-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded mb-4 transition-colors text-xs";
-      importAllBtn.textContent = `Import All ${results.length} Items into [${mediaTypeVal.toUpperCase()} > ${targetCategoryVal}]`;
-      importAllBtn.onclick = () => importBulk(results, mediaTypeVal, targetCategoryVal);
+      importAllBtn.textContent = `Import All ${results.length} Items into [${targetCategoryVal}]`;
+      importAllBtn.onclick = () => importBulk(results, targetCategoryVal);
       tmdbResults.appendChild(importAllBtn);
 
       results.forEach(item => {
@@ -572,7 +539,7 @@
           title: title,
           type: mediaTypeVal,
           category: targetCategoryVal,
-          genre: genreNames || (mediaTypeVal === 'series' ? 'TV Series' : 'Movie'),
+          genre: genreNames || (isSeriesCat ? 'TV Series' : 'Movie'),
           description: item.overview,
           posterUrl: posterUrl,
           videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
@@ -610,27 +577,43 @@
       try {
         movieObj.createdAt = movieObj.createdAt || Date.now();
         if (movieObj.tmdbId) {
-          const endpoint = movieObj.type === 'series' ? 'tv' : 'movie';
-          const res = await fetch(`https://api.themoviedb.org/3/${endpoint}/${movieObj.tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=credits,images`);
-          const details = await res.json();
+          let primaryEndpoint = movieObj.type === 'series' || movieObj.category === 'Web Series' ? 'tv' : 'movie';
+          let res = await fetch(`https://api.themoviedb.org/3/${primaryEndpoint}/${movieObj.tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=credits,images`);
+          let details = await res.json();
           
-          movieObj.runtime = details.runtime || (details.episode_run_time ? details.episode_run_time[0] : null);
-          movieObj.voteAverage = details.vote_average || null;
-          movieObj.voteCount = details.vote_count || null;
-          movieObj.releaseDate = details.release_date || details.first_air_date || null;
-          movieObj.tagline = details.tagline || null;
-          
-          if (details.credits && details.credits.crew) {
-            const directorObj = details.credits.crew.find(c => c.job === 'Director' || c.job === 'Executive Producer');
-            if (directorObj) movieObj.director = directorObj.name;
+          if (details.status_code === 34 || !details.id) {
+            const fallbackEndpoint = primaryEndpoint === 'tv' ? 'movie' : 'tv';
+            const fallbackRes = await fetch(`https://api.themoviedb.org/3/${fallbackEndpoint}/${movieObj.tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=credits,images`);
+            const fallbackDetails = await fallbackRes.json();
+            if (fallbackDetails.id) {
+              details = fallbackDetails;
+            }
           }
-          if (details.credits && details.credits.cast) {
-             movieObj.topCast = details.credits.cast.slice(0, 6).map(c => c.name);
+
+          if (details.id) {
+            movieObj.title = movieObj.title || details.title || details.name;
+            movieObj.runtime = details.runtime || (details.episode_run_time ? details.episode_run_time[0] : null);
+            movieObj.voteAverage = details.vote_average || null;
+            movieObj.voteCount = details.vote_count || null;
+            movieObj.releaseDate = details.release_date || details.first_air_date || null;
+            movieObj.tagline = details.tagline || null;
+            
+            if (details.credits && details.credits.crew) {
+              const directorObj = details.credits.crew.find(c => c.job === 'Director' || c.job === 'Executive Producer');
+              if (directorObj) movieObj.director = directorObj.name;
+            }
+            if (details.credits && details.credits.cast) {
+               movieObj.topCast = details.credits.cast.slice(0, 6).map(c => c.name);
+            }
+            if (details.images && details.images.backdrops) {
+               movieObj.backdrops = details.images.backdrops.slice(0, 6).map(img => `https://image.tmdb.org/t/p/w1280${img.file_path}`);
+            }
+            if (movieObj.type === 'series' || movieObj.category === 'Web Series') {
+              movieObj.seasonsCount = details.number_of_seasons || (details.seasons ? details.seasons.length : 1);
+            } else {
+              delete movieObj.seasonsCount;
+            }
           }
-          if (details.images && details.images.backdrops) {
-             movieObj.backdrops = details.images.backdrops.slice(0, 6).map(img => `https://image.tmdb.org/t/p/w1280${img.file_path}`);
-          }
-          movieObj.seasonsCount = details.number_of_seasons || (details.seasons ? details.seasons.length : 1);
         }
 
         await addDoc(collection(db, 'movies'), movieObj);
@@ -640,7 +623,10 @@
       }
     }
 
-    async function importBulk(results, mediaTypeVal, categoryVal) {
+    async function importBulk(results, categoryVal) {
+      const isSeriesCat = categoryVal === 'Web Series';
+      const mediaTypeVal = isSeriesCat ? 'series' : 'movie';
+
       const btn = document.querySelector('#tmdbResults button');
       if (btn) {
           btn.textContent = 'Importing... Please wait';
@@ -657,7 +643,7 @@
           title: title,
           type: mediaTypeVal,
           category: categoryVal,
-          genre: genreNames || (mediaTypeVal === 'series' ? 'TV Series' : 'Movie'),
+          genre: genreNames || (isSeriesCat ? 'TV Series' : 'Movie'),
           description: item.overview,
           posterUrl: posterUrl,
           videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -669,7 +655,7 @@
           btn.textContent = 'All Imported ✓';
           btn.classList.replace('bg-green-600', 'bg-gray-600');
       }
-      alert('Bulk import complete!');
+      alert(`Bulk import complete! Items added to [${categoryVal}].`);
     }
 
     // Auto-Fetch TMDB for Manual Add Form
@@ -677,7 +663,9 @@
     if (autoFetchTmdbBtn) {
       autoFetchTmdbBtn.addEventListener('click', async () => {
         const titleVal = document.getElementById('title').value.trim();
-        const typeVal = document.getElementById('type').value;
+        const categoryVal = document.getElementById('category').value;
+        const isSeries = categoryVal === 'Web Series';
+
         if (!titleVal) {
           alert('Please enter a title first!');
           return;
@@ -685,8 +673,8 @@
         autoFetchTmdbBtn.textContent = 'Fetching...';
         autoFetchTmdbBtn.disabled = true;
 
-        const endpoint = typeVal === 'series' ? 'search/tv' : 'search/movie';
-        const detailsEndpoint = typeVal === 'series' ? 'tv' : 'movie';
+        const endpoint = isSeries ? 'search/tv' : 'search/movie';
+        const detailsEndpoint = isSeries ? 'tv' : 'movie';
 
         try {
           const res = await fetch(`https://api.themoviedb.org/3/${endpoint}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(titleVal)}`);
@@ -1036,7 +1024,7 @@
                 const movieObj = {
                   title: title,
                   type: isSeries ? 'series' : 'movie',
-                  category: isSeries ? 'HOLLYWOOD' : 'HOLLYWOOD',
+                  category: isSeries ? 'Web Series' : 'HollyWood',
                   genre: isSeries ? 'TV Series' : 'Movie',
                   description: item.overview,
                   posterUrl: posterUrl,
@@ -1231,11 +1219,8 @@
           if (movie) {
             document.getElementById('editId').value = movie.id;
             
-            const currentType = movie.type || 'movie';
-            const currentCat = movie.category || (currentType === 'series' ? 'HOLLYWOOD' : 'HOLLYWOOD');
-
-            editType.value = currentType;
-            populateCategoryDropdown(editType, editCategory, currentCat);
+            const currentCat = movie.category || (movie.type === 'series' ? 'Web Series' : 'BollyWood');
+            populateCategoryDropdown(editCategory, currentCat);
 
             document.getElementById('editTitle').value = movie.title;
             document.getElementById('editGenre').value = movie.genre;
@@ -1272,13 +1257,16 @@
       const topCastStr = document.getElementById('editTopCast').value.trim();
       const topCastArr = topCastStr ? topCastStr.split(',').map(s => s.trim()).filter(Boolean) : [];
       const editTmdbIdVal = Number(document.getElementById('editTmdbId').value) || null;
-      const editSeasonsCountVal = Number(document.getElementById('editSeasonsCount').value) || (editType.value === 'series' ? 1 : null);
+      
+      const categoryVal = editCategory.value;
+      const typeVal = categoryVal === 'Web Series' ? 'series' : 'movie';
+      const editSeasonsCountVal = Number(document.getElementById('editSeasonsCount')?.value) || (typeVal === 'series' ? 1 : null);
       
       try {
         await updateDoc(doc(db, 'movies', id), {
           title: document.getElementById('editTitle').value,
-          type: editType.value,
-          category: editCategory.value,
+          type: typeVal,
+          category: categoryVal,
           genre: document.getElementById('editGenre').value,
           description: document.getElementById('editDescription').value,
           posterUrl: document.getElementById('editPosterUrl').value,
@@ -1309,8 +1297,9 @@
       submitBtn.textContent = 'Processing...';
       submitBtn.disabled = true;
 
-      const typeVal = typeSelect.value;
       const categoryVal = categorySelect.value;
+      const typeVal = categoryVal === 'Web Series' ? 'series' : 'movie';
+
       const title = document.getElementById('title').value;
       const genre = document.getElementById('genre').value;
       const description = document.getElementById('description').value;
@@ -1374,7 +1363,7 @@
         });
 
         form.reset();
-        populateCategoryDropdown(typeSelect, categorySelect);
+        populateCategoryDropdown(categorySelect);
 
         successMessage.textContent = 'Content added successfully!';
         successMessage.classList.remove('text-red-400', 'bg-red-600/20', 'border-red-600/50');

@@ -128,23 +128,20 @@ export default function Home() {
         {/* Quick Category Pills */}
         <section className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none select-none">
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-2">Categories:</span>
-          <Link href="/movies/hindi" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
-            🎬 Hindi Movies
+          <Link href="/movies/bollywood" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
+            🎬 BollyWood
           </Link>
           <Link href="/movies/hollywood" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
-            🎥 Hollywood
+            🎥 HollyWood
           </Link>
-          <Link href="/movies/south-indian" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
-            🔥 South Indian
+          <Link href="/movies/hindi-dubbed" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
+            🎙️ Hindi Dubbed
           </Link>
-          <Link href="/series/k-drama" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
-            💖 K-Drama
+          <Link href="/movies/south-hindi" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
+            🔥 South Hindi
           </Link>
-          <Link href="/series/anime" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
-            ⚡ Anime
-          </Link>
-          <Link href="/series/bangla" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
-            🇧🇩 Bangla Series
+          <Link href="/movies/web-series" className="shrink-0 text-xs bg-white/5 hover:bg-white/10 hover:border-accent text-gray-300 border border-white/10 px-3.5 py-1.5 rounded-full font-semibold click-effect active:scale-95 touch-manipulation">
+            📺 Web Series
           </Link>
         </section>
 

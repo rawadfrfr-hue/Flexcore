@@ -7,12 +7,15 @@ import MovieCard from '@/components/MovieCard';
 import { SkeletonWatch } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, getDocs, query, limit } from 'firebase/firestore';
-import { Movie, enrichMovieWithTmdb, formatRuntime } from '@/lib/movies';
+import { Movie, enrichMovieWithTmdb, formatRuntime, isSeriesItem } from '@/lib/movies';
 
 type ServerSource = 'vidsrc' | 'autoembed' | 'vidlink' | 'twoembed' | 'smashystream' | 'vidsrc_icu' | 'videasy' | 'direct';
 
 // Set to true to unhide multi-provider & server mirror selector in the future
 const SHOW_OTHER_PROVIDERS = false;
+
+// Set to true to temporarily pause downloads and show maintenance popup
+const IS_DOWNLOAD_PAUSED = true;
 
 export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -26,13 +29,33 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   const [selectedSubServer, setSelectedSubServer] = useState<number>(1);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
+  const [episodeCount, setEpisodeCount] = useState<number>(24);
   const [showDownloadModal, setShowDownloadModal] = useState<boolean>(false);
   const [downloadOptions, setDownloadOptions] = useState<any[]>([]);
   const [downloadLoading, setDownloadLoading] = useState<boolean>(false);
 
+  // Dynamically fetch episode count for TV Series season from TMDB if available
+  useEffect(() => {
+    let active = true;
+    if (movie && isSeriesItem(movie) && movie.tmdbId) {
+      const TMDB_API_KEY = "40997d508f165094637f1d6f8a9ab148";
+      fetch(`https://api.themoviedb.org/3/tv/${movie.tmdbId}/season/${selectedSeason}?api_key=${TMDB_API_KEY}`)
+        .then(res => res.json())
+        .then(data => {
+          if (active && data.episodes && Array.isArray(data.episodes) && data.episodes.length > 0) {
+            setEpisodeCount(data.episodes.length);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [movie, selectedSeason]);
+
   // Fetch Automated Downloads when modal is opened or season/episode changes
   useEffect(() => {
-    if (showDownloadModal && movie) {
+    if (showDownloadModal && movie && !IS_DOWNLOAD_PAUSED) {
       const currentMovie = movie;
       async function fetchDownloads() {
         setDownloadLoading(true);
@@ -110,7 +133,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
     );
   }
 
-  const isSeries = movie.type === 'series' || movie.type === 'tv' || (movie.type !== 'movie' && (movie.category?.toLowerCase().includes('series') || movie.category?.toLowerCase() === 'k-drama' || movie.category?.toLowerCase() === 'anime'));
+  const isSeries = isSeriesItem(movie);
   const tmdbId = movie.tmdbId;
 
   // Build Multi-Provider & Sub-Server Embed URL
@@ -187,7 +210,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
   }
 
   const seasonsList = Array.from({ length: movie.seasonsCount || 5 }, (_, i) => i + 1);
-  const episodesList = Array.from({ length: 24 }, (_, i) => i + 1);
+  const episodesList = Array.from({ length: episodeCount }, (_, i) => i + 1);
 
   // Define sub-servers available per provider
   const getSubServersList = (p: ServerSource) => {
@@ -401,14 +424,44 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
         )}
 
         {/* Series Season & Episode Controls */}
-        {isSeries && tmdbId && (
-          <div className="bg-[#0f0f14] p-4 rounded-2xl border border-white/10 space-y-4">
+        {isSeries && (
+          <div className="bg-[#0f0f14] p-4.5 rounded-2xl border border-white/10 space-y-4 shadow-xl">
+            {/* Header with Prev/Next buttons */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-3 flex-wrap gap-2">
+              <div className="flex items-center gap-2 text-sm font-extrabold text-white">
+                <span className="text-accent text-lg">📺</span>
+                <span>Season & Episode Selection</span>
+                <span className="text-xs font-normal text-gray-400">
+                  (Currently Streaming: <strong className="text-accent">S{selectedSeason} : E{selectedEpisode}</strong>)
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={selectedEpisode <= 1}
+                  onClick={() => setSelectedEpisode(prev => Math.max(1, prev - 1))}
+                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold text-gray-300 border border-white/10 transition-all click-effect touch-manipulation flex items-center gap-1"
+                >
+                  <span>◀</span>
+                  <span>Prev EP</span>
+                </button>
+                <button
+                  disabled={selectedEpisode >= episodeCount}
+                  onClick={() => setSelectedEpisode(prev => prev + 1)}
+                  className="px-3.5 py-1.5 rounded-xl bg-accent hover:bg-accent/80 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold text-white border border-accent/40 shadow-md shadow-accent/20 transition-all click-effect touch-manipulation flex items-center gap-1"
+                >
+                  <span>Next EP</span>
+                  <span>▶</span>
+                </button>
+              </div>
+            </div>
+
             {/* Seasons Row */}
             <div className="space-y-2">
               <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
                 Select Season:
               </span>
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10">
                 {seasonsList.map(sNum => (
                   <button
                     key={sNum}
@@ -416,10 +469,10 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                       setSelectedSeason(sNum);
                       setSelectedEpisode(1);
                     }}
-                    className={`shrink-0 text-xs px-4 py-1.5 rounded-lg font-bold transition-all click-effect touch-manipulation ${
+                    className={`shrink-0 text-xs px-4 py-2 rounded-xl font-bold transition-all click-effect touch-manipulation border ${
                       selectedSeason === sNum
-                        ? 'bg-white text-black font-extrabold shadow-md'
-                        : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
+                        ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                     }`}
                   >
                     Season {sNum}
@@ -433,15 +486,15 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
               <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
                 Select Episode (Season {selectedSeason}):
               </span>
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-white/10">
                 {episodesList.map(eNum => (
                   <button
                     key={eNum}
                     onClick={() => setSelectedEpisode(eNum)}
-                    className={`shrink-0 min-w-[44px] h-9 text-xs rounded-lg font-bold transition-all flex items-center justify-center click-effect touch-manipulation ${
+                    className={`shrink-0 min-w-[46px] h-10 text-xs rounded-xl font-bold transition-all flex items-center justify-center click-effect touch-manipulation border ${
                       selectedEpisode === eNum
-                        ? 'bg-accent text-white font-extrabold shadow-md border border-accent'
-                        : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
+                        ? 'bg-white text-black font-extrabold border-white shadow-md scale-[1.05]'
+                        : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                     }`}
                   >
                     EP {eNum}
@@ -621,124 +674,181 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
 
       {/* Automated Torrent & Direct Download Options Modal */}
       {showDownloadModal && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-[#12121a] border border-white/15 rounded-3xl p-6 sm:p-8 max-w-2xl w-full space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
-            <button 
-              onClick={() => setShowDownloadModal(false)}
-              className="absolute top-5 right-5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all"
-            >
-              ✕
-            </button>
-
-            <div className="space-y-1">
-              <span className="text-xs font-bold text-accent uppercase tracking-wider">Automated Multi-Source Downloader</span>
-              <h2 className="text-xl sm:text-2xl font-black text-white">Download {movie.title}</h2>
-              <p className="text-xs text-gray-400">
-                {isSeries ? `Selected: Season ${selectedSeason}, Episode ${selectedEpisode}` : 'High-speed automated download sources (YTS, 1337x, TorrentGalaxy, EZTV)'}
-              </p>
-            </div>
-
-            <div className="overflow-y-auto space-y-3 pr-1 flex-1 scrollbar-thin scrollbar-thumb-white/10">
-              {downloadLoading ? (
-                <div className="py-12 flex flex-col items-center justify-center space-y-3">
-                  <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-xs text-gray-400 font-bold">Scraping fast download links from YTS, 1337x & TorrentGalaxy...</p>
-                </div>
-              ) : downloadOptions.length > 0 ? (
-                downloadOptions.map((opt) => (
-                  <div
-                    key={opt.id}
-                    className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all space-y-3"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-accent/20 border border-accent/40 text-accent">
-                            {opt.quality}
-                          </span>
-                          <span className="text-xs font-bold text-gray-300">
-                            💾 {opt.size}
-                          </span>
-                          <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                            🌱 {opt.seeders} Seeds
-                          </span>
-                        </div>
-                        <h4 className="text-sm font-bold text-white mt-1.5 line-clamp-1">{opt.name}</h4>
-                        <span className="text-[10px] text-gray-400 font-medium">Source: {opt.source}</span>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
-                      {/* WebTor 1-Click Web Downloader */}
-                      <a
-                        href={opt.webtorUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex-1 min-w-[140px] text-center text-xs px-3.5 py-2 rounded-xl font-bold bg-accent text-white hover:bg-accent/80 transition-all shadow-md shadow-accent/20 flex items-center justify-center gap-1.5 click-effect"
-                      >
-                        ⚡ 1-Click Web Download
-                      </a>
-
-                      {/* Magnet Link */}
-                      <a
-                        href={opt.magnetUrl}
-                        className="text-xs px-3.5 py-2 rounded-xl font-bold bg-white/10 hover:bg-white/20 text-gray-200 transition-all border border-white/10 flex items-center gap-1.5 click-effect"
-                      >
-                        🧲 Magnet Link
-                      </a>
-
-                      {/* Torrent File if available */}
-                      {opt.torrentUrl && (
-                        <a
-                          href={opt.torrentUrl}
-                          download
-                          className="text-xs px-3.5 py-2 rounded-xl font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition-all flex items-center gap-1.5 click-effect"
-                        >
-                          📄 .Torrent File
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="py-8 text-center space-y-3 bg-white/5 border border-white/10 rounded-2xl p-4">
-                  <p className="text-sm text-gray-300 font-semibold">No automated torrent sources found for this title.</p>
-                  <p className="text-xs text-gray-400">You can use direct video streaming or try another server.</p>
-                </div>
-              )}
-
-              {movie.videoUrl && (
-                <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl space-y-2 mt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block">Direct Video Source</span>
-                      <h4 className="text-sm font-bold text-white">Direct MP4 Video File</h4>
-                    </div>
-                    <a
-                      href={movie.videoUrl}
-                      download
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs font-bold bg-emerald-500 text-black px-4 py-2 rounded-xl hover:bg-emerald-400 transition-all shadow-md click-effect"
-                    >
-                      Download MP4 ➔
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="pt-2 border-t border-white/10 text-center">
+        IS_DOWNLOAD_PAUSED ? (
+          /* Maintenance / Paused Popup Card */
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-[10px] z-50 flex items-center justify-center p-4">
+            <div className="bg-[#14141f] border border-white/10 rounded-[24px] p-6 sm:p-8 max-w-md w-full shadow-2xl shadow-black/80 relative animate-in fade-in zoom-in-95 duration-200 text-center space-y-5">
+              {/* Minimalist Light Grey Close Button */}
               <button 
                 onClick={() => setShowDownloadModal(false)}
-                className="text-xs text-gray-400 hover:text-white transition-colors"
+                aria-label="Close"
+                className="absolute top-4 right-4 text-gray-400 hover:text-red-500 bg-white/5 hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all cursor-pointer"
               >
-                Close Window
+                ✕
               </button>
+
+              {/* Maintenance Animated Gears Badge */}
+              <div className="mx-auto w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shadow-lg shadow-cyan-500/15 relative overflow-hidden">
+                {/* Rotating Main Gear */}
+                <svg className="w-8 h-8 text-cyan-400 animate-spin" style={{ animationDuration: '7s' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {/* Counter-rotating Small Gear */}
+                <svg className="w-4 h-4 text-sky-300 absolute bottom-2.5 right-2.5 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '4s' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                </svg>
+              </div>
+
+              {/* Heading & Subtitle */}
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black text-white tracking-tight">Downloads Paused</h2>
+                <div className="inline-block px-3 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[11px] font-bold border border-amber-500/30">
+                  🛠️ Server Maintenance Underway
+                </div>
+              </div>
+
+              {/* Message Text */}
+              <p className="text-sm text-gray-300 leading-relaxed font-medium px-2">
+                Downloads are temporarily paused for server maintenance. We will be back online shortly!
+              </p>
+
+              {/* Authentic Telegram Blue CTA Button */}
+              <div className="pt-2">
+                <a
+                  href="https://t.me"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 bg-gradient-to-r from-[#0088cc] to-[#24A1DE] hover:from-[#0077b5] hover:to-[#1e8ec7] text-white font-extrabold rounded-xl transition-all shadow-lg shadow-[#0088cc]/35 hover:shadow-[#0088cc]/50 hover:scale-[1.02] active:scale-95 click-effect cursor-pointer text-sm"
+                >
+                  <svg className="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.25-5.54 3.67-.52.36-1 .54-1.43.53-.47-.01-1.37-.27-2.04-.49-.83-.27-1.49-.42-1.43-.88.03-.24.37-.49 1.02-.75 4.01-1.75 6.69-2.9 8.04-3.46 3.82-1.59 4.61-1.87 5.13-1.88.11 0 .37.03.54.17.14.12.18.28.2.45-.02.07-.02.16-.04.28z"/>
+                  </svg>
+                  <span>Join Telegram for Updates</span>
+                </a>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div className="bg-[#12121a] border border-white/15 rounded-3xl p-6 sm:p-8 max-w-2xl w-full space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+              <button 
+                onClick={() => setShowDownloadModal(false)}
+                className="absolute top-5 right-5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all"
+              >
+                ✕
+              </button>
+
+              <div className="space-y-1">
+                <span className="text-xs font-bold text-accent uppercase tracking-wider">Automated Multi-Source Downloader</span>
+                <h2 className="text-xl sm:text-2xl font-black text-white">Download {movie.title}</h2>
+                <p className="text-xs text-gray-400">
+                  {isSeries ? `Selected: Season ${selectedSeason}, Episode ${selectedEpisode}` : 'High-speed automated download sources (YTS, 1337x, TorrentGalaxy, EZTV)'}
+                </p>
+              </div>
+
+              <div className="overflow-y-auto space-y-3 pr-1 flex-1 scrollbar-thin scrollbar-thumb-white/10">
+                {downloadLoading ? (
+                  <div className="py-12 flex flex-col items-center justify-center space-y-3">
+                    <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-xs text-gray-400 font-bold">Scraping fast download links from YTS, 1337x & TorrentGalaxy...</p>
+                  </div>
+                ) : downloadOptions.length > 0 ? (
+                  downloadOptions.map((opt) => (
+                    <div
+                      key={opt.id}
+                      className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all space-y-3"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-accent/20 border border-accent/40 text-accent">
+                              {opt.quality}
+                            </span>
+                            <span className="text-xs font-bold text-gray-300">
+                              💾 {opt.size}
+                            </span>
+                            <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                              🌱 {opt.seeders} Seeds
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-bold text-white mt-1.5 line-clamp-1">{opt.name}</h4>
+                          <span className="text-[10px] text-gray-400 font-medium">Source: {opt.source}</span>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+                        {/* WebTor 1-Click Web Downloader */}
+                        <a
+                          href={opt.webtorUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 min-w-[140px] text-center text-xs px-3.5 py-2 rounded-xl font-bold bg-accent text-white hover:bg-accent/80 transition-all shadow-md shadow-accent/20 flex items-center justify-center gap-1.5 click-effect"
+                        >
+                          ⚡ 1-Click Web Download
+                        </a>
+
+                        {/* Magnet Link */}
+                        <a
+                          href={opt.magnetUrl}
+                          className="text-xs px-3.5 py-2 rounded-xl font-bold bg-white/10 hover:bg-white/20 text-gray-200 transition-all border border-white/10 flex items-center gap-1.5 click-effect"
+                        >
+                          🧲 Magnet Link
+                        </a>
+
+                        {/* Torrent File if available */}
+                        {opt.torrentUrl && (
+                          <a
+                            href={opt.torrentUrl}
+                            download
+                            className="text-xs px-3.5 py-2 rounded-xl font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition-all flex items-center gap-1.5 click-effect"
+                          >
+                            📄 .Torrent File
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-8 text-center space-y-3 bg-white/5 border border-white/10 rounded-2xl p-4">
+                    <p className="text-sm text-gray-300 font-semibold">No automated torrent sources found for this title.</p>
+                    <p className="text-xs text-gray-400">You can use direct video streaming or try another server.</p>
+                  </div>
+                )}
+
+                {movie.videoUrl && (
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl space-y-2 mt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block">Direct Video Source</span>
+                        <h4 className="text-sm font-bold text-white">Direct MP4 Video File</h4>
+                      </div>
+                      <a
+                        href={movie.videoUrl}
+                        download
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-bold bg-emerald-500 text-black px-4 py-2 rounded-xl hover:bg-emerald-400 transition-all shadow-md click-effect"
+                      >
+                        Download MP4 ➔
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-white/10 text-center">
+                <button 
+                  onClick={() => setShowDownloadModal(false)}
+                  className="text-xs text-gray-400 hover:text-white transition-colors"
+                >
+                  Close Window
+                </button>
+              </div>
+            </div>
+          </div>
+        )
       )}
     </div>
   );

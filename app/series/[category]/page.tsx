@@ -6,15 +6,14 @@ const InfiniteMovieGrid = dynamic(() => import('@/components/InfiniteMovieGrid')
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Movie, isSeriesItem, sortNewestFirst } from '@/lib/movies';
+import { Movie, isSeriesItem, matchesCategory, sortNewestFirst } from '@/lib/movies';
 
 const SERIES_CATEGORY_NAMES: Record<string, string> = {
-  'bangla': 'Bangla Web Series',
-  'hollywood': 'Hollywood Web Series',
-  'anime': 'Anime Series',
-  'hindi': 'Hindi Web Series',
-  'bangla-dubbed': 'Bangla Dubbed Series',
-  'k-drama': 'K-Drama Series',
+  'bollywood': 'BollyWood',
+  'hollywood': 'HollyWood',
+  'hindi-dubbed': 'Hindi Dubbed',
+  'south-hindi': 'South Hindi',
+  'web-series': 'Web Series',
 };
 
 export default function SeriesCategoryPage({ params }: { params: Promise<{ category: string }> }) {
@@ -22,7 +21,7 @@ export default function SeriesCategoryPage({ params }: { params: Promise<{ categ
   const [series, setSeries] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const categoryTitle = SERIES_CATEGORY_NAMES[category.toLowerCase()] || `${category.toUpperCase()} Series`;
+  const categoryTitle = SERIES_CATEGORY_NAMES[category.toLowerCase()] || `${category.toUpperCase()}`;
 
   useEffect(() => {
     const q = query(collection(db, 'movies'));
@@ -33,36 +32,7 @@ export default function SeriesCategoryPage({ params }: { params: Promise<{ categ
       })) as Movie[];
 
       const filtered = rawMovies.filter(m => {
-        if (!isSeriesItem(m)) return false;
-
-        const cat = (m.category || '').toLowerCase().trim();
-        const genre = (m.genre || '').toLowerCase().trim();
-        const title = (m.title || '').toLowerCase().trim();
-        const target = category.toLowerCase().trim();
-
-        if (target === 'bangla-dubbed') {
-          return cat.includes('bangla') && (cat.includes('dubbed') || genre.includes('dubbed'));
-        }
-        if (target === 'bangla') {
-          if (cat.includes('dubbed')) return false;
-          return cat === 'bangla' || cat.includes('bangla') || genre.includes('bangla') || title.includes('bangla');
-        }
-        if (target === 'k-drama') {
-          return cat.includes('k-drama') || cat.includes('kdrama') || cat.includes('k drama') || genre.includes('k-drama') || genre.includes('kdrama') || genre.includes('korea');
-        }
-        if (target === 'anime') {
-          return cat.includes('anime') || genre.includes('anime') || title.includes('anime');
-        }
-        if (target === 'hindi') {
-          return cat === 'hindi' || (cat.includes('hindi') && !cat.includes('dubbed')) || genre.includes('hindi');
-        }
-        if (target === 'hollywood') {
-          return cat === 'hollywood' || cat.includes('hollywood') || genre.includes('hollywood') || genre.includes('english');
-        }
-
-        const catNorm = cat.replace(/-/g, ' ');
-        const targetNorm = target.replace(/-/g, ' ');
-        return catNorm.includes(targetNorm) || genre.includes(targetNorm) || title.includes(targetNorm);
+        return matchesCategory(m, category);
       });
 
       const sorted = sortNewestFirst(filtered);

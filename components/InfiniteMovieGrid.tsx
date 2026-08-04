@@ -8,27 +8,23 @@ export default function InfiniteMovieGrid({ movies }: { movies: Movie[] }) {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Reset when movies list changes completely
-    setDisplayCount(24);
-  }, [movies]);
-
-  useEffect(() => {
+    const currentTarget = observerTarget.current;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
           setDisplayCount((prev) => Math.min(prev + 24, movies.length));
         }
       },
-      { rootMargin: '400px' } // Load 400px before scrolling into view
+      { rootMargin: '400px' }
     );
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+    if (currentTarget) {
+      observer.observe(currentTarget);
     }
 
     return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
       }
     };
   }, [movies.length]);

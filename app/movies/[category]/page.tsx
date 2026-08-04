@@ -5,14 +5,14 @@ import MovieCard from '@/components/MovieCard';
 import { SkeletonGrid } from '@/components/Skeleton';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { Movie, isSeriesItem, sortNewestFirst } from '@/lib/movies';
+import { Movie, isSeriesItem, matchesCategory, sortNewestFirst } from '@/lib/movies';
 
 const CATEGORY_NAMES: Record<string, string> = {
-  'hindi': 'Hindi Movies',
-  'hollywood': 'Hollywood Movies',
-  'hindi-dubbed': 'Hindi Dubbed Movies',
-  'south-indian': 'South Indian Movies',
-  'bangla': 'Bangla Movies',
+  'bollywood': 'BollyWood',
+  'hollywood': 'HollyWood',
+  'hindi-dubbed': 'Hindi Dubbed',
+  'south-hindi': 'South Hindi',
+  'web-series': 'Web Series',
 };
 
 export default function MovieCategoryPage({ params }: { params: Promise<{ category: string }> }) {
@@ -20,7 +20,7 @@ export default function MovieCategoryPage({ params }: { params: Promise<{ catego
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const categoryTitle = CATEGORY_NAMES[category.toLowerCase()] || `${category.toUpperCase()} Movies`;
+  const categoryTitle = CATEGORY_NAMES[category.toLowerCase()] || `${category.toUpperCase()}`;
 
   useEffect(() => {
     const q = query(collection(db, 'movies'));
@@ -31,14 +31,12 @@ export default function MovieCategoryPage({ params }: { params: Promise<{ catego
       })) as Movie[];
 
       const filtered = rawMovies.filter(m => {
-        if (isSeriesItem(m)) return false;
-
-        const cat = (m.category || '').toLowerCase().replace(/-/g, ' ');
-        const genre = (m.genre || '').toLowerCase().replace(/-/g, ' ');
-        const title = (m.title || '').toLowerCase().replace(/-/g, ' ');
-        const target = category.toLowerCase().replace(/-/g, ' ');
-
-        return cat.includes(target) || genre.includes(target) || title.includes(target);
+        const targetSlug = category.toLowerCase().trim();
+        // If it's not the web-series category page, exclude series items
+        if (targetSlug !== 'web-series' && targetSlug !== 'web%20series' && targetSlug !== 'series' && isSeriesItem(m)) {
+          return false;
+        }
+        return matchesCategory(m, category);
       });
 
       const sorted = sortNewestFirst(filtered);

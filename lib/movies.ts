@@ -35,45 +35,108 @@ export function setMoviesCache(movies: Movie[]) {
 }
 
 export function isSeriesItem(m: Movie): boolean {
-  if (m.type === 'series' || m.type === 'tv') return true;
-  if (m.seasonsCount && m.seasonsCount > 0) return true;
-
+  if (!m) return false;
   const cat = (m.category || '').toLowerCase().trim();
+  const type = (m.type || '').toLowerCase().trim();
   const genre = (m.genre || '').toLowerCase().trim();
+  const title = (m.title || '').toLowerCase().trim();
+
+  // Explicit check for Web Series category, type, genre, or title markers
+  if (
+    cat === 'web series' ||
+    cat === 'web-series' ||
+    cat === 'series' ||
+    cat.includes('web series') ||
+    cat.includes('series') ||
+    cat.includes('web')
+  ) {
+    return true;
+  }
+
+  if (type === 'series' || type === 'tv') {
+    return true;
+  }
+
+  if (m.seasonsCount && m.seasonsCount > 0 && type !== 'movie') {
+    return true;
+  }
 
   if (
-    cat.includes('series') || 
-    cat.includes('k-drama') || 
-    cat.includes('kdrama') || 
-    cat.includes('anime') || 
-    cat === 'bangla' ||
-    cat === 'hollywood' ||
-    cat === 'hindi' ||
-    cat === 'bangla dubbed' ||
-    genre.includes('tv series') || 
-    genre.includes('web series') || 
-    genre.includes('k-drama') || 
-    genre.includes('kdrama') || 
-    genre.includes('anime') ||
-    genre.includes('tv show')
+    genre.includes('tv series') ||
+    genre.includes('web series') ||
+    genre.includes('tv show') ||
+    genre.includes('drama series')
   ) {
-    if (m.type === 'movie') {
-      // If explicitly movie, only count as series if category or genre explicitly has series indicator
-      return (
-        cat.includes('series') ||
-        cat.includes('k-drama') ||
-        cat.includes('kdrama') ||
-        cat.includes('anime') ||
-        genre.includes('tv series') ||
-        genre.includes('web series') ||
-        genre.includes('k-drama') ||
-        genre.includes('anime')
-      );
-    }
+    return true;
+  }
+
+  if (
+    title.includes('season 1') ||
+    title.includes('season 2') ||
+    title.includes('season 3') ||
+    title.includes('s01') ||
+    title.includes('s02')
+  ) {
     return true;
   }
 
   return false;
+}
+
+export function matchesCategory(m: Movie, categorySlug: string): boolean {
+  if (!m || !categorySlug) return false;
+
+  let target = '';
+  try {
+    target = decodeURIComponent(categorySlug).toLowerCase().trim();
+  } catch {
+    target = categorySlug.toLowerCase().trim();
+  }
+  target = target.replace(/_/g, '-').replace(/\s+/g, '-');
+
+  const cat = (m.category || '').toLowerCase().trim();
+  const genre = (m.genre || '').toLowerCase().trim();
+  const title = (m.title || '').toLowerCase().trim();
+
+  const seriesFlag = isSeriesItem(m);
+
+  // Web Series Category matching
+  if (target === 'web-series' || target === 'web series' || target === 'series') {
+    return seriesFlag || cat.includes('web') || cat.includes('series');
+  }
+
+  // If item is identified as a series item, strictly exclude it from movie categories
+  if (seriesFlag || cat.includes('series') || cat.includes('web')) {
+    return false;
+  }
+
+  // South Hindi Category matching
+  if (target === 'south-hindi' || target === 'south') {
+    return cat.includes('south') || genre.includes('south');
+  }
+
+  // Bollywood Category matching - STRICT EXCLUSIONS
+  if (target === 'bollywood' || target === 'hindi') {
+    if (cat.includes('south') || cat.includes('dubbed') || cat.includes('series') || cat.includes('web')) {
+      return false;
+    }
+    return cat === 'bollywood' || cat.includes('bollywood') || (cat === 'hindi' && !cat.includes('dubbed'));
+  }
+
+  // Hollywood Category matching
+  if (target === 'hollywood') {
+    return cat === 'hollywood' || cat.includes('hollywood');
+  }
+
+  // Hindi Dubbed Category matching
+  if (target === 'hindi-dubbed' || target === 'dubbed') {
+    return cat.includes('hindi dubbed') || cat.includes('dubbed') || genre.includes('dubbed');
+  }
+
+  // Fallback matching
+  const catNorm = cat.replace(/-/g, ' ');
+  const targetNorm = target.replace(/-/g, ' ');
+  return catNorm.includes(targetNorm) || genre.includes(targetNorm) || title.includes(targetNorm);
 }
 
 export function sortNewestFirst(items: Movie[]): Movie[] {
