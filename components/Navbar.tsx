@@ -119,18 +119,6 @@ export default function Navbar() {
                   })}
                 </div>
               </div>
-
-              {/* Admin Link */}
-              <div className="pt-2 border-t border-white/10">
-                <a
-                  href="/admin.html"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block w-full text-left px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-                >
-                  ⚙️ Admin Dashboard
-                </a>
-              </div>
             </nav>
 
             <div className="pt-4 border-t border-white/10 text-[11px] text-gray-500 text-center">

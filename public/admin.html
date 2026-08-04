@@ -78,12 +78,27 @@
       </div>
       <p class="text-sm text-gray-400 mb-4">Select Content Type & Category first, then search TMDB to auto-import metadata.</p>
       
-      <!-- Category selector for TMDB Import -->
-      <div class="mb-4">
-        <label class="block text-xs font-semibold text-gray-300 mb-1">Target Category</label>
-        <select id="tmdbCategory" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent text-sm font-semibold">
-          <!-- Categories inject here -->
-        </select>
+      <!-- Category & Content Type Selector for TMDB Import -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1">Target Category</label>
+          <select id="tmdbCategory" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent text-sm font-semibold">
+            <!-- Categories inject here -->
+          </select>
+        </div>
+        <div class="bg-gray-900/60 p-2.5 rounded-lg border border-gray-700 flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-sm font-bold text-white">Series</span>
+              <span id="tmdbSeriesBadge" class="hidden text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-full uppercase">Series ON</span>
+            </div>
+            <p class="text-[11px] text-gray-400">Toggle ON for Web/TV Series search</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer select-none shrink-0 ml-2">
+            <input type="checkbox" id="tmdbIsSeriesToggle" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+          </label>
+        </div>
       </div>
 
       <div class="flex gap-2 mb-4">
@@ -106,12 +121,29 @@
         Content added successfully!
       </div>
       <form id="addMovieForm" class="space-y-4">
-        <!-- Category Selection -->
-        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700/80">
-          <label class="block text-sm font-semibold text-accent mb-1">Category</label>
-          <select id="category" required class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent font-bold">
-            <!-- Categories inject here -->
-          </select>
+        <!-- Category & Series Toggle Switch -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700/80">
+            <label class="block text-sm font-semibold text-accent mb-1">Category</label>
+            <select id="category" required class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent font-bold">
+              <!-- Categories inject here -->
+            </select>
+          </div>
+
+          <!-- Series On/Off Toggle Switch Button -->
+          <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700/80 flex items-center justify-between shadow-inner">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-base font-extrabold text-white">Series</span>
+                <span id="seriesBadge" class="hidden text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-full uppercase shadow">Series ON</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-0.5">Toggle ON if this is a Series (Enables Season & Episode system)</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer select-none shrink-0 ml-2">
+              <input type="checkbox" id="isSeriesToggle" class="sr-only peer">
+              <div class="w-12 h-6.5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+            </label>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -178,9 +210,12 @@
             <label class="block text-sm font-medium text-gray-400 mb-1">TMDB ID (Optional / Auto-filled)</label>
             <input type="number" id="manualTmdbId" placeholder="e.g. 1399 (Enables embed server player)" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent">
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1">Seasons Count (For Series)</label>
-            <input type="number" id="manualSeasonsCount" placeholder="1" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent">
+          <div id="seasonsCountBox" class="p-3 bg-gray-900 border border-gray-700 rounded-lg transition-all">
+            <label class="block text-sm font-bold text-gray-300 mb-1 flex items-center justify-between">
+              <span>Seasons Count (For Series)</span>
+              <span id="seriesSystemBadge" class="hidden text-[10px] bg-purple-600 text-white px-1.5 py-0.5 rounded font-black uppercase">Series System Active</span>
+            </label>
+            <input type="number" id="manualSeasonsCount" placeholder="1" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent font-bold">
           </div>
         </div>
 
@@ -283,11 +318,28 @@
       <form id="editMovieForm" class="space-y-4">
         <input type="hidden" id="editId">
         
-        <div class="bg-gray-900/60 p-3 rounded border border-gray-700">
-          <label class="block text-xs font-semibold text-accent mb-1">Category</label>
-          <select id="editCategory" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent text-sm font-bold">
-            <!-- Categories injected dynamically -->
-          </select>
+        <!-- Category & Series Toggle Switch -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-900/60 p-3 rounded border border-gray-700">
+            <label class="block text-xs font-semibold text-accent mb-1">Category</label>
+            <select id="editCategory" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-accent text-sm font-bold">
+              <!-- Categories injected dynamically -->
+            </select>
+          </div>
+
+          <div class="bg-gray-900/60 p-3 rounded border border-gray-700 flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-white">Series</span>
+                <span id="editSeriesBadge" class="hidden text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-full uppercase">Series ON</span>
+              </div>
+              <p class="text-[11px] text-gray-400">Toggle ON for Series (Season & Episode system)</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer select-none shrink-0 ml-2">
+              <input type="checkbox" id="editIsSeriesToggle" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+            </label>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -449,6 +501,64 @@
 
     const editCategory = document.getElementById('editCategory');
     populateCategoryDropdown(editCategory);
+
+    // Series Toggle Switch Element References
+    const tmdbIsSeriesToggle = document.getElementById('tmdbIsSeriesToggle');
+    const tmdbSeriesBadge = document.getElementById('tmdbSeriesBadge');
+    
+    const isSeriesToggle = document.getElementById('isSeriesToggle');
+    const seriesBadge = document.getElementById('seriesBadge');
+    const seriesSystemBadge = document.getElementById('seriesSystemBadge');
+    const seasonsCountBox = document.getElementById('seasonsCountBox');
+
+    const editIsSeriesToggle = document.getElementById('editIsSeriesToggle');
+    const editSeriesBadge = document.getElementById('editSeriesBadge');
+
+    function updateTmdbSeriesUI(isSeries) {
+      if (tmdbIsSeriesToggle) tmdbIsSeriesToggle.checked = isSeries;
+      if (tmdbSeriesBadge) tmdbSeriesBadge.classList.toggle('hidden', !isSeries);
+    }
+
+    function updateManualSeriesUI(isSeries) {
+      if (isSeriesToggle) isSeriesToggle.checked = isSeries;
+      if (seriesBadge) seriesBadge.classList.toggle('hidden', !isSeries);
+      if (seriesSystemBadge) seriesSystemBadge.classList.toggle('hidden', !isSeries);
+      if (seasonsCountBox) {
+        if (isSeries) {
+          seasonsCountBox.classList.add('border-purple-500/80', 'bg-purple-950/20');
+          seasonsCountBox.classList.remove('border-gray-700', 'bg-gray-900');
+        } else {
+          seasonsCountBox.classList.remove('border-purple-500/80', 'bg-purple-950/20');
+          seasonsCountBox.classList.add('border-gray-700', 'bg-gray-900');
+        }
+      }
+    }
+
+    function updateEditSeriesUI(isSeries) {
+      if (editIsSeriesToggle) editIsSeriesToggle.checked = isSeries;
+      if (editSeriesBadge) editSeriesBadge.classList.toggle('hidden', !isSeries);
+    }
+
+    if (tmdbIsSeriesToggle) {
+      tmdbIsSeriesToggle.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        updateTmdbSeriesUI(isChecked);
+      });
+    }
+
+    if (isSeriesToggle) {
+      isSeriesToggle.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        updateManualSeriesUI(isChecked);
+      });
+    }
+
+    if (editIsSeriesToggle) {
+      editIsSeriesToggle.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        updateEditSeriesUI(isChecked);
+      });
+    }
 
     // TMDB Search Logic
     const TMDB_API_KEY = "40997d508f165094637f1d6f8a9ab148";
@@ -664,7 +774,7 @@
       autoFetchTmdbBtn.addEventListener('click', async () => {
         const titleVal = document.getElementById('title').value.trim();
         const categoryVal = document.getElementById('category').value;
-        const isSeries = categoryVal === 'Web Series';
+        const isSeries = (isSeriesToggle && isSeriesToggle.checked) || categoryVal === 'Web Series';
 
         if (!titleVal) {
           alert('Please enter a title first!');
@@ -1219,8 +1329,10 @@
           if (movie) {
             document.getElementById('editId').value = movie.id;
             
-            const currentCat = movie.category || (movie.type === 'series' ? 'Web Series' : 'BollyWood');
+            const isSeriesItem = movie.type === 'series' || movie.category === 'Web Series';
+            const currentCat = movie.category || (isSeriesItem ? 'Web Series' : 'BollyWood');
             populateCategoryDropdown(editCategory, currentCat);
+            updateEditSeriesUI(isSeriesItem);
 
             document.getElementById('editTitle').value = movie.title;
             document.getElementById('editGenre').value = movie.genre;
@@ -1234,7 +1346,7 @@
             document.getElementById('editTagline').value = movie.tagline || '';
             document.getElementById('editTopCast').value = (movie.topCast || []).join(', ');
             if (document.getElementById('editTmdbId')) document.getElementById('editTmdbId').value = movie.tmdbId || '';
-            if (document.getElementById('editSeasonsCount')) document.getElementById('editSeasonsCount').value = movie.seasonsCount || (movie.type === 'series' ? 1 : '');
+            if (document.getElementById('editSeasonsCount')) document.getElementById('editSeasonsCount').value = movie.seasonsCount || (isSeriesItem ? 1 : '');
             editModal.classList.remove('hidden');
           }
         });
@@ -1259,8 +1371,9 @@
       const editTmdbIdVal = Number(document.getElementById('editTmdbId').value) || null;
       
       const categoryVal = editCategory.value;
-      const typeVal = categoryVal === 'Web Series' ? 'series' : 'movie';
-      const editSeasonsCountVal = Number(document.getElementById('editSeasonsCount')?.value) || (typeVal === 'series' ? 1 : null);
+      const isSeriesVal = (editIsSeriesToggle && editIsSeriesToggle.checked) || categoryVal === 'Web Series';
+      const typeVal = isSeriesVal ? 'series' : 'movie';
+      const editSeasonsCountVal = isSeriesVal ? (Number(document.getElementById('editSeasonsCount')?.value) || 1) : null;
       
       try {
         await updateDoc(doc(db, 'movies', id), {
@@ -1298,7 +1411,8 @@
       submitBtn.disabled = true;
 
       const categoryVal = categorySelect.value;
-      const typeVal = categoryVal === 'Web Series' ? 'series' : 'movie';
+      const isSeriesVal = (isSeriesToggle && isSeriesToggle.checked) || categoryVal === 'Web Series';
+      const typeVal = isSeriesVal ? 'series' : 'movie';
 
       const title = document.getElementById('title').value;
       const genre = document.getElementById('genre').value;
@@ -1364,6 +1478,7 @@
 
         form.reset();
         populateCategoryDropdown(categorySelect);
+        updateManualSeriesUI(false);
 
         successMessage.textContent = 'Content added successfully!';
         successMessage.classList.remove('text-red-400', 'bg-red-600/20', 'border-red-600/50');
