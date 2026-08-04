@@ -24,6 +24,17 @@ export default function Navbar() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const pathname = usePathname();
 
+  useEffect(() => {
+    if (isDrawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isDrawerOpen]);
+
   return (
     <>
       {/* Left Navigation Drawer */}
@@ -36,17 +47,17 @@ export default function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/75"
               onClick={() => setIsDrawerOpen(false)}
             ></motion.div>
 
             {/* Drawer Content */}
             <motion.div 
-              initial={{ x: "-100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "-100%", opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-80 max-w-[85vw] bg-[#0d0d12]/95 backdrop-blur-xl border-r border-white/10 h-full flex flex-col z-10 p-6 overflow-y-auto shadow-2xl"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-80 max-w-[85vw] bg-[#0e0e14] border-r border-white/10 h-full flex flex-col z-10 p-6 overflow-y-auto transform-gpu will-change-transform overscroll-contain shadow-2xl"
             >
               <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
               <Link 

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Navbar from '@/components/Navbar';
+import SplashIntro from '@/components/SplashIntro';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark scroll-smooth">
       <body suppressHydrationWarning className="bg-[#08080a] text-white antialiased touch-manipulation select-none flex flex-col min-h-screen">
+        <SplashIntro />
         <Navbar />
         {children}
       </body>
